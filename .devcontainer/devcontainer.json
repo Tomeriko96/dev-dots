@@ -7,5 +7,20 @@
   "remoteUser": "dev",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "forwardPorts": [8000],
-  "customizations": {}
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "vscodevim.vim",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
 }

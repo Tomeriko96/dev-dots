@@ -112,12 +112,18 @@ if ! shopt -oq posix; then
 fi
 
 # Use zoxide with bash
-eval "$(zoxide init bash)"
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init bash)"
+fi
 
 # Load bash helpers
-source ~/.config/bash/rc
+if [[ -f ~/.config/bash/rc ]]; then
+  source ~/.config/bash/rc
+fi
 
 # Use starship with bash
-eval "$(starship init bash)"
+if command -v starship &>/dev/null; then
+  eval "$(starship init bash)"
+fi
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"

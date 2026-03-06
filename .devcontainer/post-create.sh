@@ -28,3 +28,40 @@ if [[ ! -d "$CONFIG_DIR" ]]; then
 else
   echo "⚠️ LazyVim already exists"
 fi
+
+# Deploy bash dotfiles from repo
+WORKSPACE_DIR="${PWD}"
+echo "📦 Deploying dotfiles from $WORKSPACE_DIR..."
+
+cp "$WORKSPACE_DIR/bash/.bashrc" "$HOME/.bashrc"
+mkdir -p "$HOME/.config/bash"
+cp -r "$WORKSPACE_DIR/bash/.config/bash/." "$HOME/.config/bash/"
+echo "✅ Bash dotfiles deployed"
+
+# Ensure uv shell completion is present (added by Dockerfile, may be missing after .bashrc overwrite)
+if ! grep -q 'uv generate-shell-completion' "$HOME/.bashrc"; then
+  echo 'eval "$(uv generate-shell-completion bash)"' >> "$HOME/.bashrc"
+fi
+
+# Deploy Starship config
+mkdir -p "$HOME/.config"
+cp "$WORKSPACE_DIR/starship/.config/starship.toml" "$HOME/.config/starship.toml"
+echo "✅ Starship config deployed"
+
+# Deploy tmux config
+cp "$WORKSPACE_DIR/.devcontainer/python-uv/tmux.conf" "$HOME/.tmux.conf"
+echo "✅ tmux config deployed"
+
+# Deploy tmux dev layout script
+cp "$WORKSPACE_DIR/.devcontainer/python-uv/tmux-dev-layouts.sh" "$HOME/.tmux-dev-layouts.sh"
+chmod +x "$HOME/.tmux-dev-layouts.sh"
+
+# Source tmux layouts in .bashrc
+sed -i '/\.tmux-dev-layouts\.sh/d' "$HOME/.bashrc" 2>/dev/null || true
+echo 'source ~/.tmux-dev-layouts.sh' >> "$HOME/.bashrc"
+
+# Add startup echo for tmux layouts
+if ! grep -q 'Tmux layouts:' "$HOME/.bashrc" 2>/dev/null; then
+  echo 'echo "📺 Tmux layouts: tdl <ai>, tdlm <ai>, tsl <count> <cmd>"' >> "$HOME/.bashrc"
+fi
+echo "✅ tmux dev layouts ready"

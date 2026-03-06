@@ -14,9 +14,12 @@ RUN apt-get update && \
         fzf \
         tree-sitter-cli \
         fd-find \
+        bat \
         jq \
         wget \
-        gnupg && \
+        gnupg \
+        bash-completion && \
+    ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
     rm -rf /var/lib/apt/lists/*
 
 # Install ripgrep
@@ -32,6 +35,13 @@ RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qsv && \
     rm -rf /var/lib/apt/lists/* && \
     rm /etc/apt/sources.list.d/qsv.list
+
+# Install eza (modern ls replacement)
+RUN set -eux; \
+    ARCH=$(uname -m); \
+    EZA_URL="https://github.com/eza-community/eza/releases/latest/download/eza_${ARCH}-unknown-linux-gnu.tar.gz"; \
+    curl -fsSL "$EZA_URL" | tar -xz -C /usr/local/bin; \
+    eza --version
 
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
@@ -82,6 +92,12 @@ RUN curl -fsSL https://opencode.ai/install | bash
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc
+
+# Install Starship prompt
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$HOME/.local/bin"
+
+# Install zoxide (smart cd)
+RUN curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 
 # Default command
 CMD ["bash"]
