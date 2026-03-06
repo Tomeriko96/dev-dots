@@ -5,6 +5,22 @@
     "context": ".."
   },
   "remoteUser": "dev",
+  "mounts": [
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig",
+      "target": "/home/dev/.gitconfig",
+      "type": "bind",
+      "consistency": "cached",
+      "readonly": true
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.ssh",
+      "target": "/home/dev/.ssh",
+      "type": "bind",
+      "consistency": "cached",
+      "readonly": true
+    }
+  ],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "forwardPorts": [8000],
   "customizations": {}
