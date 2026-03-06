@@ -4,11 +4,11 @@ set -euo pipefail
 echo "🔥 Starting post-create.sh..."
 echo "👤 Running as: $(id)"
 
-# FIXED PATH (ensures ALL CLIs work)
-if ! grep -q '.local/bin' "$HOME/.bashrc"; then
-  echo 'export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"' >> "$HOME/.bashrc"
+# FIXED PATH (ensures ALL CLIs work, no host PATH inheritance)
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
+if ! grep -qF '.local/bin' "$HOME/.bashrc"; then
+  echo 'export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"' >> "$HOME/.bashrc"
 fi
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 # Verify ALL CLIs work
 echo "✅ CLIs available:"

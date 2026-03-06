@@ -7,5 +7,13 @@
   "remoteUser": "dev",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "forwardPorts": [8000],
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges:true",
+    "--pids-limit=256"
+  ],
+  "containerEnv": {
+    "PATH": "/home/dev/.devcontainers/bin:/home/dev/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
+  },
   "customizations": {}
 }

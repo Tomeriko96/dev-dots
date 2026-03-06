@@ -119,5 +119,4 @@ source ~/.config/bash/rc
 
 # Use starship with bash
 eval "$(starship init bash)"
-export PATH="$HOME/.devcontainers/bin:$PATH"
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+export PATH="$HOME/.devcontainers/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
