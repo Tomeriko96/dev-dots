@@ -28,3 +28,34 @@ if [[ ! -d "$CONFIG_DIR" ]]; then
 else
   echo "⚠️ LazyVim already exists"
 fi
+
+# Copy bash dotfiles
+WORKSPACE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [[ -d "$WORKSPACE_DIR/bash/.config/bash" ]]; then
+  mkdir -p "$HOME/.config/bash"
+  for f in aliases functions rc; do
+    if [[ -f "$WORKSPACE_DIR/bash/.config/bash/$f" ]]; then
+      cp "$WORKSPACE_DIR/bash/.config/bash/$f" "$HOME/.config/bash/$f"
+    else
+      echo "⚠️ bash dotfile missing: bash/.config/bash/$f"
+    fi
+  done
+  echo "✅ Bash dotfiles installed"
+fi
+
+# Copy starship config
+if [[ -f "$WORKSPACE_DIR/starship/.config/starship.toml" ]]; then
+  mkdir -p "$HOME/.config"
+  cp "$WORKSPACE_DIR/starship/.config/starship.toml" "$HOME/.config/starship.toml"
+  echo "✅ Starship config installed"
+fi
+
+# Configure git with delta
+if command -v delta >/dev/null 2>&1; then
+  git config --global core.pager delta
+  git config --global interactive.diffFilter "delta --color-only"
+  git config --global delta.navigate true
+  git config --global delta.light false
+  echo "✅ Git configured with delta"
+fi

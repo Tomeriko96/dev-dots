@@ -28,6 +28,10 @@ Defined in `.devcontainer/Dockerfile`:
 - Python 3.12 slim base image
 - Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd`, `tree-sitter-cli`
 - Data and search utilities: `ripgrep`, `qsv`, `fzf`
+- File and shell utilities: `bat` (syntax-highlighted cat), `eza` (modern ls), `zoxide` (smart cd)
+- Git workflow: `delta` (diff viewer), `gh` (GitHub CLI), `lazygit` (TUI git client)
+- Markdown and content: `glow` (terminal markdown renderer)
+- Shell prompt: `starship`
 - Latest Neovim install
 - Non-root `dev` user and workspace-ready permissions
 - CLI installs for `opencode` and `uv`
@@ -37,7 +41,10 @@ Defined in `.devcontainer/Dockerfile`:
 Defined in `.devcontainer/post-create.sh` and `.devcontainer/python-uv/post-create.sh`:
 
 - PATH normalization for user-level CLIs
+- Bash dotfiles copied to `~/.config/bash/` (aliases, functions, rc)
+- Starship config copied to `~/.config/starship.toml`
 - LazyVim starter bootstrap in `~/.config/nvim`
+- Git configured to use `delta` for improved diffs
 - CLI availability checks (for AI workflows)
 - tmux configuration and helper layout scripts
 
@@ -47,7 +54,11 @@ From `bash/` and `starship/`:
 
 - Modular bash config (`aliases`, `functions`, `rc`)
 - Productivity helpers (`fzf` history search, compression helpers, apt helpers)
-- `zoxide`-powered directory jumping
+- `zoxide`-powered directory jumping with `cd` override
+- `eza` for modern directory listing with icons and git status
+- `bat` (via `batcat`) for syntax-highlighted file viewing
+- `lazygit` aliased as `lg` for a TUI git workflow
+- `glow` aliased as `preview` for rendering Markdown in the terminal
 - Starship prompt with concise git-aware status
 
 ### AI + tmux Workflows

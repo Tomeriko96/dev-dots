@@ -36,6 +36,20 @@ if command -v zoxide &> /dev/null; then
 fi
 
 # =====================
+# Git & Version Control
+# =====================
+if command -v lazygit &> /dev/null; then
+  alias lg='lazygit'
+fi
+
+# =====================
+# Markdown Viewer
+# =====================
+if command -v glow &> /dev/null; then
+  alias preview='glow'
+fi
+
+# =====================
 # Compression
 # =====================
 alias decompress="tar -xzf"

@@ -16,7 +16,10 @@ RUN apt-get update && \
         fd-find \
         jq \
         wget \
-        gnupg && \
+        gnupg \
+        bat \
+        eza \
+        zoxide && \
     rm -rf /var/lib/apt/lists/*
 
 # Install ripgrep
@@ -32,6 +35,38 @@ RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qsv && \
     rm -rf /var/lib/apt/lists/* && \
     rm /etc/apt/sources.list.d/qsv.list
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+    dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
+    tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install delta (better git diff)
+RUN curl -LO https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_amd64.deb && \
+    dpkg -i git-delta_0.18.2_amd64.deb && \
+    rm git-delta_0.18.2_amd64.deb
+
+# Install starship prompt
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
+
+# Install lazygit (TUI git client)
+RUN set -eux; \
+    LAZYGIT_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest | jq -r '.tag_name' | sed 's/^v//'); \
+    curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"; \
+    tar -C /usr/local/bin -xzf /tmp/lazygit.tar.gz lazygit; \
+    rm /tmp/lazygit.tar.gz
+
+# Install glow (terminal markdown viewer)
+RUN set -eux; \
+    GLOW_VERSION=$(curl -s https://api.github.com/repos/charmbracelet/glow/releases/latest | jq -r '.tag_name' | sed 's/^v//'); \
+    curl -Lo /tmp/glow.tar.gz "https://github.com/charmbracelet/glow/releases/latest/download/glow_${GLOW_VERSION}_Linux_x86_64.tar.gz"; \
+    tar -C /usr/local/bin -xzf /tmp/glow.tar.gz glow; \
+    rm /tmp/glow.tar.gz
 
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
