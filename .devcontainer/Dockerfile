@@ -12,8 +12,8 @@ RUN apt-get update && \
         locales \
         xz-utils \
         fzf \
-        tree-sitter-cli \
         fd-find \
+        bat \
         jq \
         wget \
         gnupg && \
@@ -39,6 +39,22 @@ RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
 
 ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
+
+# Install eza (modern ls replacement)
+RUN set -eux; \
+    EZA_VERSION=$(curl -s https://api.github.com/repos/eza-community/eza/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    curl -L --retry 3 --fail \
+        "https://github.com/eza-community/eza/releases/download/${EZA_VERSION}/eza_x86_64-unknown-linux-gnu.tar.gz" \
+        -o /tmp/eza.tar.gz && \
+    tar -C /usr/local/bin -xzf /tmp/eza.tar.gz eza && \
+    rm /tmp/eza.tar.gz
+
+# Install zoxide (smart cd)
+RUN curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | \
+    sh -s -- --bin-dir /usr/local/bin
+
+# Install starship prompt
+RUN curl -sSf https://starship.rs/install.sh | sh -s -- --yes --bin-dir /usr/local/bin
 
 # Install latest Neovim
 RUN set -eux; \
