@@ -74,7 +74,7 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 
 # Copy dotfiles into the user home directory (baked into the image for instant availability)
 COPY --chown=${USERNAME}:${USERNAME} bash/.bashrc /home/${USERNAME}/.bashrc
-COPY --chown=${USERNAME}:${USERNAME} bash/.config/ /home/${USERNAME}/.config/bash/
+COPY --chown=${USERNAME}:${USERNAME} bash/.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} starship/.config/starship.toml /home/${USERNAME}/.config/starship.toml
 COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux.conf /home/${USERNAME}/.tmux.conf
 COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux-dev-layouts.sh /home/${USERNAME}/.tmux-dev-layouts.sh
