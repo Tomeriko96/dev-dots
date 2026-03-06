@@ -16,13 +16,44 @@ RUN apt-get update && \
         fd-find \
         jq \
         wget \
-        gnupg && \
+        gnupg \
+        unzip \
+        zip \
+        python3-venv \
+        luarocks && \
     rm -rf /var/lib/apt/lists/*
 
 # Install ripgrep
 RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb && \
     dpkg -i ripgrep_14.1.1-1_amd64.deb && \
     rm ripgrep_14.1.1-1_amd64.deb
+
+# Install Node.js LTS (required by Mason.nvim for many LSP servers: typescript, pyright, eslint, prettier, etc.)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g neovim
+
+# Install Go (required by Mason.nvim for Go-based tools: gopls, goimports, golangci-lint, etc.)
+RUN set -eux; \
+    LATEST_GO=$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version'); \
+    curl -fsSL "https://go.dev/dl/${LATEST_GO}.linux-amd64.tar.gz" -o /tmp/go.tar.gz; \
+    tar -C /usr/local -xzf /tmp/go.tar.gz; \
+    rm /tmp/go.tar.gz; \
+    /usr/local/go/bin/go version
+
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+# Install lazygit (required by LazyVim lazygit.nvim integration)
+RUN set -eux; \
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | jq -r '.tag_name' | sed 's/^v//'); \
+    curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"; \
+    tar -C /usr/local/bin -xzf /tmp/lazygit.tar.gz lazygit; \
+    rm /tmp/lazygit.tar.gz; \
+    lazygit --version
+
+# Install pynvim (Python Neovim client required by Python-based Neovim plugins)
+RUN pip install --no-cache-dir pynvim
 
 # Install qsv from external repo (gnupg now available)
 RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
@@ -73,7 +104,7 @@ WORKDIR /workspace
 USER ${USERNAME}
 
 # User environment
-ENV PATH="/home/${USERNAME}/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
+ENV PATH="/home/${USERNAME}/.local/bin:/usr/local/go/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
 ENV FZF_DEFAULT_COMMAND="fd --type f"
 
 # Install OpenCode CLI
