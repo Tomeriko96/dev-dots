@@ -69,6 +69,14 @@ RUN groupadd --gid ${GID} ${USERNAME} && \
     useradd --uid ${UID} --gid ${GID} -m -s /bin/bash ${USERNAME} && \
     mkdir -p /workspace && chown ${USERNAME}:${USERNAME} /workspace
 
+# Copy dotfiles into the user home directory (baked into the image for instant availability)
+COPY --chown=${USERNAME}:${USERNAME} bash/.bashrc /home/${USERNAME}/.bashrc
+COPY --chown=${USERNAME}:${USERNAME} bash/.config/ /home/${USERNAME}/.config/bash/
+COPY --chown=${USERNAME}:${USERNAME} starship/.config/starship.toml /home/${USERNAME}/.config/starship.toml
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux.conf /home/${USERNAME}/.tmux.conf
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux-dev-layouts.sh /home/${USERNAME}/.tmux-dev-layouts.sh
+RUN chmod +x /home/${USERNAME}/.tmux-dev-layouts.sh
+
 WORKDIR /workspace
 USER ${USERNAME}
 
@@ -80,8 +88,17 @@ ENV FZF_DEFAULT_COMMAND="fd --type f"
 RUN curl -fsSL https://opencode.ai/install | bash
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install starship prompt
+RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
+
+# Install zoxide (smart cd replacement)
+RUN curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+
+# Bootstrap LazyVim starter config (plugins are downloaded on first nvim launch)
+RUN git clone --depth=1 https://github.com/LazyVim/starter /home/${USERNAME}/.config/nvim && \
+    rm -rf /home/${USERNAME}/.config/nvim/.git
 
 # Default command
 CMD ["bash"]

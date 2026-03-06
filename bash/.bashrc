@@ -119,5 +119,12 @@ source ~/.config/bash/rc
 
 # Use starship with bash
 eval "$(starship init bash)"
+
+# uv shell completion
+eval "$(uv generate-shell-completion bash)"
+
+# Tmux dev layout helpers (tdl / tdlm / tsl)
+[[ -f "$HOME/.tmux-dev-layouts.sh" ]] && source "$HOME/.tmux-dev-layouts.sh"
+
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"

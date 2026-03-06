@@ -30,16 +30,15 @@ Defined in `.devcontainer/Dockerfile`:
 - Data and search utilities: `ripgrep`, `qsv`, `fzf`
 - Latest Neovim install
 - Non-root `dev` user and workspace-ready permissions
-- CLI installs for `opencode` and `uv`
+- CLI installs for `opencode`, `uv`, `starship`, and `zoxide`
+- Dotfiles pre-loaded: `.bashrc`, bash helpers, starship config, tmux config, tmux layout scripts
+- LazyVim starter pre-cloned to `~/.config/nvim` (plugins download on first `nvim` launch)
 
 ### Post-Create Provisioning
 
 Defined in `.devcontainer/post-create.sh` and `.devcontainer/python-uv/post-create.sh`:
 
-- PATH normalization for user-level CLIs
-- LazyVim starter bootstrap in `~/.config/nvim`
-- CLI availability checks (for AI workflows)
-- tmux configuration and helper layout scripts
+- CLI availability verification (nvim, opencode, uv, starship, zoxide)
 
 ### Shell and Prompt Experience
 
@@ -58,7 +57,7 @@ The tmux layout helpers are designed for coding with one or more AI assistants i
 - `tdlm <ai> [second_ai]`: one dev window per subdirectory
 - `tsl <pane_count> <command>`: command swarm across panes
 
-These commands are generated/sourced during post-create and are intended for fast, repeatable session setup.
+These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed in the image and automatically loaded by `.bashrc`.
 
 ## Repository Layout
 
