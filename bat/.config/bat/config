@@ -1,0 +1,17 @@
+# bat configuration
+# See `bat --help` for all options
+
+# Set the color theme
+--theme="TwoDark"
+
+# Show line numbers, file header, and git changes
+--style="numbers,changes,header"
+
+# Use a pager that exits if the output fits on one screen
+--pager="less -FR"
+
+# Wrap long lines
+--wrap=auto
+
+# Set the default language for files with no extension
+# --language=text

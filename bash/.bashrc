@@ -111,6 +111,8 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+
 # Use zoxide with bash
 eval "$(zoxide init bash)"
 

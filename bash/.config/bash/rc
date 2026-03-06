@@ -1,2 +1,7 @@
 source ~/.config/bash/aliases
 source ~/.config/bash/functions
+
+# Load fzf configuration
+if [[ -f ~/.config/fzf/fzf.bash ]]; then
+  source ~/.config/fzf/fzf.bash
+fi
