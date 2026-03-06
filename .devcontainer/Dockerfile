@@ -80,8 +80,10 @@ ENV FZF_DEFAULT_COMMAND="fd --type f"
 RUN curl -fsSL https://opencode.ai/install | bash
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install starship
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir ~/.local/bin
 
 # Default command
 CMD ["bash"]

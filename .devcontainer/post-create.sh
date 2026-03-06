@@ -4,11 +4,26 @@ set -euo pipefail
 echo "🔥 Starting post-create.sh..."
 echo "👤 Running as: $(id)"
 
+# Ensure we're always working from the repository/workspace root
+WORKSPACE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$WORKSPACE_DIR"
+
 # FIXED PATH (ensures ALL CLIs work)
-if ! grep -q '.local/bin' "$HOME/.bashrc"; then
-  echo 'export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"' >> "$HOME/.bashrc"
-fi
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+
+# ── Bash dotfiles ────────────────────────────────────────────────────────────
+echo "📋 Installing bash dotfiles..."
+[[ -f "$HOME/.bashrc" ]] && cp "$HOME/.bashrc" "$HOME/.bashrc.backup"
+cp bash/.bashrc "$HOME/.bashrc"
+mkdir -p "$HOME/.config/bash"
+cp -r bash/.config/bash/. "$HOME/.config/bash/"
+echo "✅ Bash dotfiles installed"
+
+# ── Starship config ──────────────────────────────────────────────────────────
+echo "🚀 Installing starship config..."
+mkdir -p "$HOME/.config"
+cp starship/.config/starship.toml "$HOME/.config/starship.toml"
+echo "✅ Starship config installed"
 
 # OpenCode CLI check
 if which opencode >/dev/null 2>&1; then

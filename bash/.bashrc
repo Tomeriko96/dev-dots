@@ -117,6 +117,9 @@ eval "$(zoxide init bash)"
 # Load bash helpers
 source ~/.config/bash/rc
 
+# uv shell completion
+eval "$(uv generate-shell-completion bash)"
+
 # Use starship with bash
 eval "$(starship init bash)"
 export PATH="$HOME/.devcontainers/bin:$PATH"
