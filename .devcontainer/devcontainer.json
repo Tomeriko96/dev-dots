@@ -6,39 +6,6 @@
   },
   "remoteUser": "dev",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "forwardPorts": [8000, 8080, 5000],
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "charliermarsh.ruff",
-        "ms-python.debugpy",
-        "eamodio.gitlens",
-        "mhutchie.git-graph",
-        "github.copilot",
-        "github.copilot-chat",
-        "ms-toolsai.jupyter",
-        "tamasfe.even-better-toml",
-        "redhat.vscode-yaml",
-        "esbenp.prettier-vscode",
-        "EditorConfig.EditorConfig"
-      ],
-      "settings": {
-        "editor.formatOnSave": true,
-        "editor.rulers": [88],
-        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
-        "[python]": {
-          "editor.defaultFormatter": "charliermarsh.ruff",
-          "editor.codeActionsOnSave": {
-            "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
-          }
-        },
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "files.trimTrailingWhitespace": true,
-        "files.insertFinalNewline": true
-      }
-    }
-  }
+  "forwardPorts": [8000, 8080, 5000]
 }
+
