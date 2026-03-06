@@ -50,15 +50,30 @@ From `bash/` and `starship/`:
 - `zoxide`-powered directory jumping
 - Starship prompt with concise git-aware status
 
+### tmux Configuration
+
+Defined in `tmux/.tmux.conf`:
+
+- Mouse support for click, resize, and scroll
+- True 24-bit color support for Neovim and modern CLI tools
+- Reduced escape-time for Neovim responsiveness
+- Focus events enabled (used by Neovim autoread)
+- Vi copy mode with familiar `v`/`y` bindings
+- Vim-style pane navigation with `prefix + h/j/k/l`
+- Intuitive split shortcuts: `prefix + |` (horizontal) and `prefix + -` (vertical)
+- Both `Ctrl-b` (default) and `Ctrl-a` (screen-style) as prefix keys
+- Reload config with `prefix + r`
+- Clean, minimal status bar showing session, user, host, and time
+
 ### AI + tmux Workflows
 
-The tmux layout helpers are designed for coding with one or more AI assistants in parallel:
+The tmux layout helpers are defined in `tmux/.tmux-dev-layouts.sh` and designed for coding with one or more AI assistants in parallel:
 
-- `tdl <ai> [second_ai]`: editor + AI pane(s) + terminal
+- `tdl <ai> [second_ai]`: editor + AI pane(s) + terminal strip
 - `tdlm <ai> [second_ai]`: one dev window per subdirectory
 - `tsl <pane_count> <command>`: command swarm across panes
 
-These commands are generated/sourced during post-create and are intended for fast, repeatable session setup.
+All three commands auto-create a tmux session when run outside of tmux, so you can use them from any shell prompt. They are sourced during post-create for immediate availability.
 
 ## Repository Layout
 
@@ -73,6 +88,9 @@ These commands are generated/sourced during post-create and are intended for fas
 │   └── slidev/
 ├── bash/
 ├── starship/
+├── tmux/
+│   ├── .tmux.conf
+│   └── .tmux-dev-layouts.sh
 ├── Makefile
 └── README.md
 ```
