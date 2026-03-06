@@ -4,11 +4,12 @@ set -euo pipefail
 echo "🔥 Starting post-create.sh..."
 echo "👤 Running as: $(id)"
 
-# FIXED PATH (ensures ALL CLIs work)
-if ! grep -q '.local/bin' "$HOME/.bashrc"; then
-  echo 'export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"' >> "$HOME/.bashrc"
-fi
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULES_DIR="$SCRIPT_DIR/modules"
+
+# Setup PATH
+# shellcheck source=modules/setup-path.sh
+source "$MODULES_DIR/setup-path.sh"
 
 # OpenCode CLI check
 if which opencode >/dev/null 2>&1; then
@@ -18,13 +19,5 @@ else
 fi
 
 # LazyVim setup
-CONFIG_DIR="$HOME/.config/nvim"
-LAZYVIM_REPO="https://github.com/LazyVim/starter"
-mkdir -p "$(dirname "$CONFIG_DIR")"
-if [[ ! -d "$CONFIG_DIR" ]]; then
-  git clone "$LAZYVIM_REPO" "$CONFIG_DIR"
-  rm -rf "$CONFIG_DIR/.git"
-  echo "✅ LazyVim installed"
-else
-  echo "⚠️ LazyVim already exists"
-fi
+# shellcheck source=modules/setup-lazyvim.sh
+source "$MODULES_DIR/setup-lazyvim.sh"
