@@ -119,6 +119,17 @@ ENV FZF_DEFAULT_COMMAND="fd --type f"
 # Install OpenCode CLI
 RUN curl -fsSL https://opencode.ai/install | bash
 
+# Install gh-dash as a gh extension
+RUN set -eux; \
+    GH_DASH_DIR="$HOME/.local/share/gh/extensions/gh-dash"; \
+    GH_DASH_TAG=$(curl -s https://api.github.com/repos/dlvhdr/gh-dash/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    [ -z "$GH_DASH_TAG" ] && { echo "ERROR: could not resolve gh-dash version"; exit 1; }; \
+    mkdir -p "$GH_DASH_DIR"; \
+    curl -fLo "$GH_DASH_DIR/gh-dash" \
+        "https://github.com/dlvhdr/gh-dash/releases/download/${GH_DASH_TAG}/gh-dash_${GH_DASH_TAG}_linux-amd64"; \
+    chmod +x "$GH_DASH_DIR/gh-dash"
+
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc

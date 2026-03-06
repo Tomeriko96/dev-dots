@@ -45,20 +45,14 @@ else
   echo "⚠️ LazyVim already exists"
 fi
 
-# Install gh-dash (GitHub TUI dashboard extension)
-echo "📊 Installing gh-dash extension..."
-if gh extension list 2>/dev/null | grep -q 'gh-dash'; then
-  echo "⚠️ gh-dash already installed"
-else
-  gh extension install dlvhdr/gh-dash 2>/dev/null && echo "✅ gh-dash installed" || echo "⚠️ gh-dash install skipped (run 'gh auth login' first)"
-fi
-
 # Print git tooling summary
 echo ""
 echo "🛠️  Git tooling available:"
 for cli in git lazygit gh delta; do
   which "$cli" >/dev/null 2>&1 && echo "  ✅ $cli: $(which $cli)" || echo "  ❌ $cli: missing"
 done
+GH_DASH_BIN="$HOME/.local/share/gh/extensions/gh-dash/gh-dash"
+[[ -x "$GH_DASH_BIN" ]] && echo "  ✅ gh-dash: $GH_DASH_BIN" || echo "  ❌ gh-dash: missing"
 echo ""
 echo "💡 Tip: Run 'gh auth login' to authenticate with GitHub (enables gh and gh-dash)"
 echo "💡 Tip: Run 'lazygit' to open the lazygit TUI"
