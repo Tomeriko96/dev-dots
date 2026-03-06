@@ -3,18 +3,31 @@
 # Tmux Dev Layouts - Create editor+AI tmux layouts
 # Source this file or add to your .bashrc: source ~/.tmux-dev-layouts.sh
 
-# Create a Tmux Dev Layout with editor, ai, and terminal
-# Usage: tdl <c|cx|codex|other_ai> [<second_ai>]
-tdl() {
-  [[ -z $1 ]] && { echo "Usage: tdl <c|cx|codex|other_ai> [<second_ai>]"; return 1; }
-  [[ -z $TMUX ]] && { echo "You must start tmux to use tdl."; return 1; }
+# Helper to check if in tmux
+_in_tmux() {
+  [[ -n "$TMUX" ]] && return 0
+  return 1
+}
 
-  local current_dir="${PWD}"
-  local editor_pane ai_pane ai2_pane
+# Create a Tmux Dev Layout with editor, ai, and terminal
+# Usage: tdl <claude|copilot|opencode> [<second_ai>]
+tdl() {
+  [[ -z $1 ]] && { echo "Usage: tdl <claude|copilot|opencode> [<second_ai>]"; return 1; }
+
   local ai="$1"
   local ai2="$2"
+  local current_dir="${PWD}"
 
-  editor_pane="$TMUX_PANE"
+  if ! _in_tmux; then
+    # Not in tmux - create session and run layout
+    tmux new-session -d -s "dev" -c "$current_dir"
+    tmux send-keys -t "dev" "tdl $ai${ai2:+ $ai2}" C-m
+    exec tmux attach-session -t "dev"
+  fi
+
+  # Inside tmux - run layout
+  local editor_pane="$TMUX_PANE"
+  local ai_pane ai2_pane
 
   tmux rename-window -t "$editor_pane" "$(basename "$current_dir")"
 
@@ -35,14 +48,21 @@ tdl() {
 }
 
 # Create multiple tdl windows with one per subdirectory in the current directory
-# Usage: tdlm <c|cx|codex|other_ai> [<second_ai>]
+# Usage: tdlm <claude|copilot|opencode> [<second_ai>]
 tdlm() {
-  [[ -z $1 ]] && { echo "Usage: tdlm <c|cx|codex|other_ai> [<second_ai>]"; return 1; }
-  [[ -z $TMUX ]] && { echo "You must start tmux to use tdlm."; return 1; }
+  [[ -z $1 ]] && { echo "Usage: tdlm <claude|copilot|opencode> [<second_ai>]"; return 1; }
 
   local ai="$1"
   local ai2="$2"
   local base_dir="$PWD"
+
+  if ! _in_tmux; then
+    tmux new-session -d -s "dev" -c "$base_dir"
+    tmux send-keys -t "dev" "tdlm $ai${ai2:+ $ai2}" C-m
+    exec tmux attach-session -t "dev"
+  fi
+
+  # Inside tmux - run layout
   local first=true
 
   tmux rename-session "$(basename "$base_dir" | tr '.:' '--')"
@@ -65,11 +85,20 @@ tdlm() {
 # Usage: tsl <pane_count> <command>
 tsl() {
   [[ -z $1 || -z $2 ]] && { echo "Usage: tsl <pane_count> <command>"; return 1; }
-  [[ -z $TMUX ]] && { echo "You must start tmux to use tsl."; return 1; }
 
   local count="$1"
   local cmd="$2"
   local current_dir="${PWD}"
+
+  if ! _in_tmux; then
+    local escaped_cmd
+    printf -v escaped_cmd '%q' "$cmd"
+    tmux new-session -d -s "dev" -c "$current_dir"
+    tmux send-keys -t "dev" "tsl $count $escaped_cmd" C-m
+    exec tmux attach-session -t "dev"
+  fi
+
+  # Inside tmux - run layout
   local -a panes
 
   tmux rename-window -t "$TMUX_PANE" "$(basename "$current_dir")"

@@ -83,7 +83,7 @@ tdl() {
   if ! _in_tmux; then
     # Not in tmux - create session and run layout
     tmux new-session -d -s "dev" -c "$current_dir"
-    tmux send-keys -t "dev" "tdl $ai $ai2" C-m
+    tmux send-keys -t "dev" "tdl $ai${ai2:+ $ai2}" C-m
     exec tmux attach-session -t "dev"
   fi
 
@@ -120,7 +120,7 @@ tdlm() {
 
   if ! _in_tmux; then
     tmux new-session -d -s "dev" -c "$base_dir"
-    tmux send-keys -t "dev" "tdlm $ai $ai2" C-m
+    tmux send-keys -t "dev" "tdlm $ai${ai2:+ $ai2}" C-m
     exec tmux attach-session -t "dev"
   fi
 
@@ -153,8 +153,10 @@ tsl() {
   local current_dir="${PWD}"
 
   if ! _in_tmux; then
+    local escaped_cmd
+    printf -v escaped_cmd '%q' "$cmd"
     tmux new-session -d -s "dev" -c "$current_dir"
-    tmux send-keys -t "dev" "tsl $count $cmd" C-m
+    tmux send-keys -t "dev" "tsl $count $escaped_cmd" C-m
     exec tmux attach-session -t "dev"
   fi
 
