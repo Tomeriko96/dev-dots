@@ -37,9 +37,12 @@ Defined in `.devcontainer/Dockerfile`:
 Defined in `.devcontainer/post-create.sh` and `.devcontainer/python-uv/post-create.sh`:
 
 - PATH normalization for user-level CLIs
+- Installs `starship` and `zoxide` if not already present
+- Copies bash config files from `bash/` to `~/.config/bash/` and wires them into `.bashrc`
+- Copies Starship config from `starship/` to `~/.config/starship.toml`
+- Copies tmux dotfiles from `tmux/` to `~/` and wires them into `.bashrc`
 - LazyVim starter bootstrap in `~/.config/nvim`
 - CLI availability checks (for AI workflows)
-- tmux configuration and helper layout scripts
 
 ### Shell and Prompt Experience
 
