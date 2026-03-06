@@ -15,9 +15,13 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 
 ## Current Status
 
-- One active container profile: `.devcontainer/devcontainer.json` (`python-uv-dev`)
-- Additional profile folders scaffolded for expansion: `.devcontainer/slidev/`, `.devcontainer/r/`, `.devcontainer/python-uv/`
-- Shared post-create setup script and shell customizations are in place
+- Four container profiles, each with its own `Dockerfile`, `devcontainer.json`, and `post-create.sh`:
+  - `python-uv` — Python 3.12 slim with `uv`, data tools, and AI-ready terminal
+  - `r` — `rocker/tidyverse` with neovim, OpenCode, and tmux layouts (default user: `rstudio`)
+  - `slidev` — MCR universal image with `fonts-noto-cjk`, latest neovim, and OpenCode (default user: `codespace`)
+  - `base` — placeholder for a minimal shared baseline
+- Shared `post-create.sh` at `.devcontainer/post-create.sh` serves as a fallback; each profile has its own dedicated version
+- Shell customizations and tmux layout helpers are set up consistently across all profiles
 
 ## What You Get Today
 
@@ -65,12 +69,12 @@ These commands are generated/sourced during post-create and are intended for fas
 ```text
 .
 ├── .devcontainer/
-│   ├── Dockerfile
-│   ├── devcontainer.json
-│   ├── post-create.sh
-│   ├── python-uv/
-│   ├── r/
-│   └── slidev/
+│   ├── Dockerfile            # python-uv base image
+│   ├── devcontainer.json     # root config (python-uv-dev)
+│   ├── post-create.sh        # shared baseline post-create script
+│   ├── python-uv/            # Python + uv profile
+│   ├── r/                    # R tidyverse profile (rocker/tidyverse, user: rstudio)
+│   └── slidev/               # Slidev presentation profile (MCR universal, user: codespace)
 ├── bash/
 ├── starship/
 ├── Makefile
@@ -79,18 +83,16 @@ These commands are generated/sourced during post-create and are intended for fas
 
 ## Quick Start
 
-1. Open this repository in VS Code.
-2. Run `Dev Containers: Reopen in Container`.
-3. Wait for post-create setup to finish.
-4. Start working with `nvim .`, `tmux`, or your preferred workflow.
+Use the `devcontainer` CLI to start any profile with Make:
 
-If you use the `devcontainer` CLI locally, Make targets are available:
+```bash
+make python-uv   # Python 3.12 + uv + data tools
+make r           # R tidyverse (rocker/tidyverse, port 8787)
+make slidev      # Slidev presentation (MCR universal, port 3030)
+make base        # Minimal shared baseline
+```
 
-- `make python-uv`
-- `make base`
-- `make slidev`
-
-Note: `base` and `slidev` targets currently assume corresponding `devcontainer.json` files will be added under their directories.
+Each target builds the container, mounts the workspace, and drops you into a `bash` shell. The `postCreateCommand` wires up LazyVim, OpenCode, and the tmux layout helpers automatically.
 
 ## Goal State
 
@@ -98,7 +100,6 @@ The long-term target is a small set of stack-focused devcontainers sharing a sin
 
 Planned direction:
 
-- Add first-class profiles for Python, frontend/content, and data workflows
 - Keep shell/editor defaults portable and easy to override
 - Make every profile AI-collaboration friendly by default
 - Preserve reproducibility with minimal manual machine setup

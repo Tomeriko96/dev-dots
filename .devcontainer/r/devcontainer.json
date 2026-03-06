@@ -1,0 +1,11 @@
+{
+  "name": "r-tidyverse-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "../.."
+  },
+  "remoteUser": "rstudio",
+  "postCreateCommand": "bash .devcontainer/r/post-create.sh",
+  "forwardPorts": [8787],
+  "customizations": {}
+}

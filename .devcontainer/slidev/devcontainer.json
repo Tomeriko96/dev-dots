@@ -1,0 +1,11 @@
+{
+  "name": "slidev-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "../.."
+  },
+  "remoteUser": "codespace",
+  "postCreateCommand": "bash .devcontainer/slidev/post-create.sh",
+  "forwardPorts": [3030],
+  "customizations": {}
+}

@@ -1,0 +1,11 @@
+{
+  "name": "python-uv-dev",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "../.."
+  },
+  "remoteUser": "dev",
+  "postCreateCommand": "bash .devcontainer/python-uv/post-create.sh",
+  "forwardPorts": [8000],
+  "customizations": {}
+}
