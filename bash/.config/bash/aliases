@@ -39,3 +39,15 @@ fi
 # Compression
 # =====================
 alias decompress="tar -xzf"
+
+# =====================
+# Git shortcuts
+# =====================
+alias g='git'     # common shorthand; override if it conflicts with other tools
+alias gst='git status -sb'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias gl='git log --oneline --graph --decorate --all'
+if command -v lazygit &>/dev/null; then
+  alias lg='lazygit'
+fi

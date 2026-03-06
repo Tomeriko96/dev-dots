@@ -48,6 +48,14 @@ mkdir -p "$HOME/.config"
 cp "$WORKSPACE_DIR/starship/.config/starship.toml" "$HOME/.config/starship.toml"
 echo "✅ Starship config deployed"
 
+# Deploy git config (only if no gitconfig exists yet)
+if [[ ! -f "$HOME/.gitconfig" ]]; then
+  cp "$WORKSPACE_DIR/git/gitconfig" "$HOME/.gitconfig"
+  echo "✅ Git config deployed"
+else
+  echo "⚠️ ~/.gitconfig already exists — skipping (add delta pager manually if desired)"
+fi
+
 # Tmux Dev Layouts setup
 echo "🖥️ Setting up tmux dev layouts..."
 

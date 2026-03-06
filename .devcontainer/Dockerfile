@@ -18,7 +18,8 @@ RUN apt-get update && \
         jq \
         wget \
         gnupg \
-        bash-completion && \
+        bash-completion \
+        direnv && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
     rm -rf /var/lib/apt/lists/*
 
@@ -42,6 +43,38 @@ RUN set -eux; \
     EZA_URL="https://github.com/eza-community/eza/releases/latest/download/eza_${ARCH}-unknown-linux-gnu.tar.gz"; \
     curl -fsSL "$EZA_URL" | tar -xz -C /usr/local/bin; \
     eza --version
+
+# Install delta (syntax-highlighted git diffs)
+RUN set -eux; \
+    DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb" -o /tmp/delta.deb && \
+    dpkg -i /tmp/delta.deb && \
+    rm /tmp/delta.deb; \
+    delta --version
+
+# Install lazygit (TUI git client)
+RUN set -eux; \
+    LG_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/'); \
+    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VERSION}/lazygit_${LG_VERSION}_Linux_x86_64.tar.gz" | \
+        tar xz -C /usr/local/bin lazygit; \
+    lazygit --version
+
+# Install gh CLI (GitHub CLI)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /etc/apt/sources.list.d/github-cli.list
+
+# Install yq (YAML processor, companion to jq)
+RUN set -eux; \
+    YQ_VERSION=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o /usr/local/bin/yq && \
+    chmod +x /usr/local/bin/yq; \
+    yq --version
 
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
