@@ -26,11 +26,13 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 Defined in `.devcontainer/Dockerfile`:
 
 - Python 3.12 slim base image
-- Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd`, `tree-sitter-cli`
+- Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd`, `tree-sitter-cli`, `openssh-client`
 - Data and search utilities: `ripgrep`, `qsv`, `fzf`
 - Latest Neovim install
 - Non-root `dev` user and workspace-ready permissions
 - CLI installs for `opencode` and `uv`
+- **Git tooling**: `lazygit` (TUI git client), `gh` (GitHub CLI), `delta` (syntax-highlighted diffs), `gh-dash` (GitHub dashboard TUI)
+- System-level git pager configured to use `delta` (user `~/.gitconfig` takes precedence)
 
 ### Post-Create Provisioning
 
@@ -40,6 +42,25 @@ Defined in `.devcontainer/post-create.sh` and `.devcontainer/python-uv/post-crea
 - LazyVim starter bootstrap in `~/.config/nvim`
 - CLI availability checks (for AI workflows)
 - tmux configuration and helper layout scripts
+- Git tooling availability summary on startup
+
+### Git Workflow Out of the Box
+
+Host credentials are forwarded into the container via `devcontainer.json` bind mounts (readonly):
+
+- `~/.gitconfig` → `/home/dev/.gitconfig`
+- `~/.ssh/` → `/home/dev/.ssh/`
+
+Git operations (`git push`, `git pull`, SSH cloning) work inside the container without any extra setup.
+
+Available git TUI tools:
+
+| Tool | Command | Notes |
+|------|---------|-------|
+| lazygit | `lazygit` | Full-featured TUI git client; integrates with LazyVim |
+| GitHub CLI | `gh` | Baked in; run `gh auth login` once to enable authenticated ops |
+| gh-dash | `gh dash` | GitHub dashboard TUI (PRs, issues, notifications) |
+| delta | automatic | Syntax-highlighted diffs for every `git diff` / `git log -p` |
 
 ### Shell and Prompt Experience
 
@@ -83,6 +104,7 @@ These commands are generated/sourced during post-create and are intended for fas
 2. Run `Dev Containers: Reopen in Container`.
 3. Wait for post-create setup to finish.
 4. Start working with `nvim .`, `tmux`, or your preferred workflow.
+5. *(Optional)* Run `gh auth login` once to enable `gh` and `gh dash` with your GitHub account.
 
 If you use the `devcontainer` CLI locally, Make targets are available:
 
