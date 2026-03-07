@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM debian:bookworm-slim
 
 # Install all system dependencies first (including gnupg for qsv)
 RUN apt-get update && \
@@ -19,6 +19,17 @@ RUN apt-get update && \
         wget \
         gnupg \
         openssh-client && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js LTS (for npm/Slidev and other Node-based tools)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install R base (for R programming and data science)
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        r-base && \
     rm -rf /var/lib/apt/lists/*
 
 # Install GitHub CLI (gh)
