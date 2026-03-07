@@ -16,8 +16,48 @@ RUN apt-get update && \
         fd-find \
         jq \
         wget \
-        gnupg && \
+        gnupg \
+        openssh-client && \
     rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI (gh)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /etc/apt/sources.list.d/github-cli.list
+
+# Install lazygit
+RUN set -eux; \
+    LAZYGIT_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/'); \
+    curl -Lo /tmp/lazygit.tar.gz \
+        "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"; \
+    tar -C /tmp -xzf /tmp/lazygit.tar.gz lazygit; \
+    mv /tmp/lazygit /usr/local/bin/lazygit; \
+    rm /tmp/lazygit.tar.gz; \
+    lazygit --version
+
+# Install delta (better git diffs)
+RUN set -eux; \
+    DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    curl -Lo /tmp/delta.deb \
+        "https://github.com/dandavison/delta/releases/latest/download/git-delta_${DELTA_VERSION}_amd64.deb"; \
+    dpkg -i /tmp/delta.deb; \
+    rm /tmp/delta.deb; \
+    delta --version
+
+# Configure delta as system-level git pager (lowest priority; user ~/.gitconfig takes precedence)
+RUN git config --system core.pager delta && \
+    git config --system interactive.diffFilter "delta --color-only" && \
+    git config --system delta.navigate true && \
+    git config --system delta.light false && \
+    git config --system merge.conflictStyle diff3 && \
+    git config --system diff.colorMoved default
 
 # Install ripgrep
 RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb && \
@@ -89,6 +129,17 @@ ENV FZF_DEFAULT_COMMAND="fd --type f"
 
 # Install OpenCode CLI
 RUN curl -fsSL https://opencode.ai/install | bash
+
+# Install gh-dash as a gh extension
+RUN set -eux; \
+    GH_DASH_DIR="$HOME/.local/share/gh/extensions/gh-dash"; \
+    GH_DASH_TAG=$(curl -s https://api.github.com/repos/dlvhdr/gh-dash/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    [ -z "$GH_DASH_TAG" ] && { echo "ERROR: could not resolve gh-dash version"; exit 1; }; \
+    mkdir -p "$GH_DASH_DIR"; \
+    curl -fLo "$GH_DASH_DIR/gh-dash" \
+        "https://github.com/dlvhdr/gh-dash/releases/download/${GH_DASH_TAG}/gh-dash_${GH_DASH_TAG}_linux-amd64"; \
+    chmod +x "$GH_DASH_DIR/gh-dash"
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
