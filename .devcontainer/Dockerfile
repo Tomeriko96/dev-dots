@@ -117,7 +117,10 @@ ENV PATH="/home/${USERNAME}/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/
 ENV FZF_DEFAULT_COMMAND="fd --type f"
 
 # Install OpenCode CLI
-RUN curl -fsSL https://opencode.ai/install | bash
+# Download the installer to a temp file before executing to avoid blind pipe-to-shell execution
+RUN curl -fsSL -o /tmp/opencode-install.sh https://opencode.ai/install && \
+    bash /tmp/opencode-install.sh && \
+    rm /tmp/opencode-install.sh
 
 # Install gh-dash as a gh extension
 RUN set -eux; \
@@ -130,8 +133,8 @@ RUN set -eux; \
         "https://github.com/dlvhdr/gh-dash/releases/download/${GH_DASH_TAG}/gh-dash_${GH_DASH_TAG}_linux-amd64"; \
     chmod +x "$GH_DASH_DIR/gh-dash"
 
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+# Install uv via pip (avoids curl-to-shell; uv publishes its native binary on PyPI)
+RUN pip install --user uv && \
     echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc
 
 # Default command
