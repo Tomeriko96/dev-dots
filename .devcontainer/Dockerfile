@@ -29,7 +29,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
 RUN curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' \
         | gpg --dearmor \
         | tee /usr/share/keyrings/cran.gpg > /dev/null && \
-    printf 'Types: deb\nURIs: https://cloud.r-project.org/bin/linux/debian\nSuites: bookworm-cran40/\nComponents: main\nSigned-By: /usr/share/keyrings/cran.gpg\n' \
+    printf 'Types: deb\nURIs: https://cloud.r-project.org/bin/linux/debian\nSuites: bookworm-cran40/\nSigned-By: /usr/share/keyrings/cran.gpg\n' \
         > /etc/apt/sources.list.d/cran.sources && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
