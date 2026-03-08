@@ -25,11 +25,20 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Install R base (for R programming and data science)
+# Install R (latest from CRAN, not the outdated Debian package)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        r-base && \
-    rm -rf /var/lib/apt/lists/*
+        software-properties-common \
+        dirmngr && \
+    wget -qO- https://cloud.r-project.org/bin/linux/debian/marutter_pubkey.asc \
+        > /etc/apt/trusted.gpg.d/cran_debian_key.asc && \
+    echo "deb https://cloud.r-project.org/bin/linux/debian bookworm-cran40/" \
+        > /etc/apt/sources.list.d/cran.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends r-base && \
+    rm -rf /var/lib/apt/lists/* && \
+    # Remove CRAN list intentionally: keeps image clean; R is installed and needs no apt-based updates
+    rm /etc/apt/sources.list.d/cran.list
 
 # Install GitHub CLI (gh)
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -70,10 +79,14 @@ RUN git config --system core.pager delta && \
     git config --system merge.conflictStyle diff3 && \
     git config --system diff.colorMoved default
 
-# Install ripgrep
-RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripgrep_14.1.1-1_amd64.deb && \
-    dpkg -i ripgrep_14.1.1-1_amd64.deb && \
-    rm ripgrep_14.1.1-1_amd64.deb
+# Install ripgrep (latest)
+RUN set -eux; \
+    RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    [ -z "$RG_VERSION" ] && { echo "ERROR: could not resolve ripgrep version"; exit 1; }; \
+    curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep_${RG_VERSION}-1_amd64.deb"; \
+    dpkg -i "ripgrep_${RG_VERSION}-1_amd64.deb"; \
+    rm "ripgrep_${RG_VERSION}-1_amd64.deb"
 
 # Install eza (modern ls replacement)
 RUN mkdir -p /etc/apt/keyrings && \
