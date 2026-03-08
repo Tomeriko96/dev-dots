@@ -12,7 +12,6 @@ RUN apt-get update && \
         locales \
         xz-utils \
         fzf \
-        tree-sitter-cli \
         fd-find \
         bat \
         jq \

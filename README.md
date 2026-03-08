@@ -128,3 +128,8 @@ Planned direction:
 - Keep shell/editor defaults portable and easy to override
 - Make every profile AI-collaboration friendly by default
 - Preserve reproducibility with minimal manual machine setup
+
+## Slidev
+
+Run `npm run dev -- --remote` to work from inside the container and expose 127.
+
