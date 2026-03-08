@@ -138,8 +138,8 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 COPY --chown=${USERNAME}:${USERNAME} bash/.bashrc /home/${USERNAME}/.bashrc
 COPY --chown=${USERNAME}:${USERNAME} bash/.config/ /home/${USERNAME}/.config/
 COPY --chown=${USERNAME}:${USERNAME} starship/.config/starship.toml /home/${USERNAME}/.config/starship.toml
-COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux.conf /home/${USERNAME}/.tmux.conf
-COPY --chown=${USERNAME}:${USERNAME} .devcontainer/python-uv/tmux-dev-layouts.sh /home/${USERNAME}/.tmux-dev-layouts.sh
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/tmux.conf /home/${USERNAME}/.tmux.conf
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/tmux-dev-layouts.sh /home/${USERNAME}/.tmux-dev-layouts.sh
 RUN chmod +x /home/${USERNAME}/.tmux-dev-layouts.sh
 
 WORKDIR /workspace
