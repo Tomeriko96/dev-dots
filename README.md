@@ -1,22 +1,17 @@
 # dev-dots
 
-A practical foundation for building the ultimate developer devcontainer(s): fast startup, strong terminal ergonomics, AI-ready workflows, and reproducible tooling.
+A single, multipurpose developer devcontainer: fast startup, strong terminal ergonomics, AI-ready workflows, and reproducible tooling.
 
-This repository combines dotfiles, container setup scripts, and workspace automation so every project can boot into a consistent, high-signal development environment.
+This repository combines dotfiles, container setup scripts, and workspace automation so any project can boot into a consistent, high-signal development environment.
 
 ## Vision
 
-`dev-dots` aims to become a collection of opinionated, production-ready devcontainers for different stacks (Python, Slidev, R, and more) while sharing a common baseline:
+`dev-dots` is an opinionated, production-ready devcontainer built to cover the full range of everyday development work — Python, data, content, and beyond — in a single container:
 
 - Reproducible CLI toolchain
 - Excellent shell UX out of the box
 - AI-assisted tmux layouts for rapid coding sessions
 - Minimal host setup required
-
-## Current Status
-
-- One active container profile: `.devcontainer/devcontainer.json` (`dev`)
-- Shared post-create setup script and shell customizations are in place
 
 ## What You Get Today
 
@@ -114,13 +109,10 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 
 ## Goal State
 
-The long-term target is a small set of stack-focused devcontainers sharing a single high-quality developer baseline, so switching projects does not mean relearning environments.
+Keep `dev-dots` a single, well-maintained multipurpose container that stays current with tooling updates and remains easy to extend for any project type. The focus is depth and quality over breadth of profiles:
 
-Planned direction:
-
-- Add first-class profiles for Python, frontend/content, and data workflows
 - Keep shell/editor defaults portable and easy to override
-- Make every profile AI-collaboration friendly by default
+- Make every session AI-collaboration friendly by default
 - Preserve reproducibility with minimal manual machine setup
 
 ## Slidev
