@@ -15,8 +15,7 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 
 ## Current Status
 
-- One active container profile: `.devcontainer/devcontainer.json` (`python-uv-dev`)
-- Additional profile folders scaffolded for expansion: `.devcontainer/slidev/`, `.devcontainer/r/`, `.devcontainer/python-uv/`
+- One active container profile: `.devcontainer/devcontainer.json` (`dev`)
 - Shared post-create setup script and shell customizations are in place
 
 ## What You Get Today
@@ -25,28 +24,27 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 
 Defined in `.devcontainer/Dockerfile`:
 
-- Python 3.12 slim base image
-- Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd`, `tree-sitter-cli`, `openssh-client`
+- Debian bookworm-slim base image
+- Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd-find`, `bat`, `openssh-client`, `build-essential`
 - Data and search utilities: `ripgrep`, `qsv`, `fzf`
+- Modern shell utilities: `eza` (ls replacement)
+- Node.js LTS (for npm and Node-based tools)
+- R base (for R programming and data science)
 - Latest Neovim install
 - Non-root `dev` user and workspace-ready permissions
 - CLI installs for `opencode`, `uv`, `starship`, and `zoxide`
 - Dotfiles pre-loaded: `.bashrc`, bash helpers, starship config, tmux config, tmux layout scripts
 - LazyVim starter pre-cloned to `~/.config/nvim` (plugins download on first `nvim` launch)
-- CLI installs for `opencode` and `uv`
 - **Git tooling**: `lazygit` (TUI git client), `gh` (GitHub CLI), `delta` (syntax-highlighted diffs), `gh-dash` (GitHub dashboard TUI)
 - System-level git pager configured to use `delta` (user `~/.gitconfig` takes precedence)
 
 ### Post-Create Provisioning
 
-Defined in `.devcontainer/post-create.sh` and `.devcontainer/python-uv/post-create.sh`:
+Defined in `.devcontainer/post-create.sh`:
 
-- CLI availability verification (nvim, opencode, uv, starship, zoxide)
-- PATH normalization for user-level CLIs
-- LazyVim starter bootstrap in `~/.config/nvim`
-- CLI availability checks (for AI workflows)
-- tmux configuration and helper layout scripts
+- CLI availability verification (nvim, opencode, uv, starship, zoxide, node, npm, Rscript)
 - Git tooling availability summary on startup
+- Helpful tips printed on startup (lazygit, gh auth login, gh dash, tdl opencode)
 
 ### Git Workflow Out of the Box
 
@@ -93,12 +91,16 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 │   ├── Dockerfile
 │   ├── devcontainer.json
 │   ├── post-create.sh
-│   ├── python-uv/
-│   ├── r/
-│   └── slidev/
+│   ├── tmux.conf
+│   └── tmux-dev-layouts.sh
 ├── bash/
+│   ├── .bashrc
+│   └── .config/bash/
+│       ├── aliases
+│       ├── functions
+│       └── rc
 ├── starship/
-├── Makefile
+│   └── .config/starship.toml
 └── README.md
 ```
 
@@ -109,14 +111,6 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 3. Wait for post-create setup to finish.
 4. Start working with `nvim .`, `tmux`, or your preferred workflow.
 5. *(Optional)* Run `gh auth login` once to enable `gh` and `gh dash` with your GitHub account.
-
-If you use the `devcontainer` CLI locally, Make targets are available:
-
-- `make python-uv`
-- `make base`
-- `make slidev`
-
-Note: `base` and `slidev` targets currently assume corresponding `devcontainer.json` files will be added under their directories.
 
 ## Goal State
 
@@ -131,5 +125,11 @@ Planned direction:
 
 ## Slidev
 
-Run `npm run dev -- --remote` to work from inside the container and expose 127.
+To present from inside the container, run:
+
+```bash
+npm run dev -- --remote
+```
+
+This exposes the Slidev dev server so you can access it from outside the container. Port `3030` is forwarded by default via `devcontainer.json`.
 
