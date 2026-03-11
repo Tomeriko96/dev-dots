@@ -1,0 +1,218 @@
+
+# =====================
+# Developer Productivity Helpers
+# =====================
+# Requires: fzf, bat/batcat
+# Enhanced with: ripgrep (rg), fd-find (fdfind/fd), eza
+#
+# Search & navigation
+#   rg-fzf  [dir]          – interactive ripgrep search with live fzf + bat preview
+#   fd-fzf  [dir]          – interactive file picker (fd + fzf + bat preview)
+#   preview <file>         – smart file preview routed to bat/csv/json display
+#
+# Filesystem
+#   lt      [dir] [depth]  – tree listing via eza (default depth: 2)
+#   sizes   [dir]          – top 20 largest files under dir (default: .)
+#
+# Process & ports
+#   port-who <port>        – show which process is listening on a port
+#
+# Node / npm
+#   npm-scripts            – fzf picker to run a package.json script
+#
+# Python / uv
+#   py-run  <script> [args…] – run a Python script in an ephemeral uv environment
+
+_dev_bat() {
+  if command -v batcat >/dev/null 2>&1; then
+    batcat "$@"
+  elif command -v bat >/dev/null 2>&1; then
+    bat "$@"
+  else
+    cat "$@"
+  fi
+}
+
+_dev_fd() {
+  if command -v fdfind >/dev/null 2>&1; then
+    fdfind "$@"
+  elif command -v fd >/dev/null 2>&1; then
+    fd "$@"
+  else
+    echo "Error: fd / fdfind is not installed" >&2
+    return 1
+  fi
+}
+
+# ── Search & navigation ────────────────────────────────────────────────────────
+
+rg-fzf() {
+  if ! command -v rg >/dev/null 2>&1; then
+    echo "Error: ripgrep (rg) is not installed" >&2
+    return 1
+  fi
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "Error: fzf is not installed" >&2
+    return 1
+  fi
+  local dir="${1:-.}"
+  local selected
+  # Live rg results fed to fzf; bat preview of the matched file with highlighted line
+  selected=$(
+    rg --color=always --line-number --no-heading --smart-case "" "$dir" 2>/dev/null |
+    fzf --ansi \
+        --prompt="Search> " \
+        --delimiter=: \
+        --preview '_dev_bat_preview {1} {2}' \
+        --preview-window='right:60%:wrap' \
+        --bind 'change:reload:rg --color=always --line-number --no-heading --smart-case {q} '"$dir"' 2>/dev/null || true'
+  )
+  if [[ -n "$selected" ]]; then
+    local file line
+    file=$(echo "$selected" | cut -d: -f1)
+    line=$(echo "$selected" | cut -d: -f2)
+    echo "$file:$line"
+  fi
+}
+
+# Internal: preview helper used by rg-fzf (called as a shell function in --preview)
+_dev_bat_preview() {
+  local file="$1" line="${2:-1}"
+  _dev_bat --style=numbers --color=always --highlight-line "$line" "$file" 2>/dev/null || cat "$file"
+}
+export -f _dev_bat_preview _dev_bat
+
+fd-fzf() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "Error: fzf is not installed" >&2
+    return 1
+  fi
+  local dir="${1:-.}"
+  local selected
+  selected=$(
+    _dev_fd --type f --hidden --exclude .git . "$dir" 2>/dev/null |
+    fzf --ansi \
+        --prompt="File> " \
+        --preview '_dev_bat --style=numbers --color=always {} 2>/dev/null || echo "(binary or unreadable)"' \
+        --preview-window='right:60%:wrap'
+  )
+  if [[ -n "$selected" ]]; then
+    echo "$selected"
+  fi
+}
+
+preview() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: preview <file>" >&2
+    return 1
+  fi
+  if [[ ! -f "$1" ]]; then
+    echo "Error: file not found: $1" >&2
+    return 1
+  fi
+  local file="$1"
+  case "${file##*.}" in
+    csv|tsv)
+      if command -v qsv >/dev/null 2>&1; then
+        qsv slice --len 20 "$file" | _dev_bat --language=csv --style=plain --color=always
+      else
+        _dev_bat --language=csv --style=plain --color=always "$file"
+      fi
+      ;;
+    json|jsonl)
+      if command -v jq >/dev/null 2>&1; then
+        jq '.' "$file" | _dev_bat --language=json --style=plain --color=always
+      else
+        _dev_bat --language=json --style=plain --color=always "$file"
+      fi
+      ;;
+    *)
+      _dev_bat --style=numbers --color=always "$file"
+      ;;
+  esac
+}
+
+# ── Filesystem ─────────────────────────────────────────────────────────────────
+
+lt() {
+  local dir="${1:-.}" depth="${2:-2}"
+  if command -v eza >/dev/null 2>&1; then
+    eza --tree --level="$depth" --color=always --icons "$dir"
+  else
+    find "$dir" -maxdepth "$depth" | sort | sed -e "s|[^/]*/|  |g"
+  fi
+}
+
+sizes() {
+  local dir="${1:-.}"
+  echo "📦 Top 20 largest files under: $dir"
+  echo ""
+  _dev_fd --type f --hidden --exclude .git . "$dir" 2>/dev/null \
+    | xargs du -sh 2>/dev/null \
+    | sort -rh \
+    | head -20
+}
+
+# ── Process & ports ────────────────────────────────────────────────────────────
+
+port-who() {
+  local port="${1:-}"
+  if [[ -z "$port" ]]; then
+    echo "Usage: port-who <port>" >&2
+    return 1
+  fi
+  echo "🔌 Processes listening on port $port:"
+  echo ""
+  # ss is more commonly available in containers than lsof
+  if command -v ss >/dev/null 2>&1; then
+    ss -tlnp "sport = :$port" 2>/dev/null || ss -tlnp | grep ":$port"
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -iTCP:"$port" -sTCP:LISTEN -n -P
+  else
+    echo "Error: neither ss nor lsof is available" >&2
+    return 1
+  fi
+}
+
+# ── Node / npm ─────────────────────────────────────────────────────────────────
+
+npm-scripts() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "Error: fzf is not installed" >&2
+    return 1
+  fi
+  local pkg="${1:-package.json}"
+  if [[ ! -f "$pkg" ]]; then
+    echo "Error: $pkg not found (run from project root)" >&2
+    return 1
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is not installed" >&2
+    return 1
+  fi
+  local script
+  script=$(jq -r '.scripts | to_entries[] | "\(.key)\t\(.value)"' "$pkg" 2>/dev/null | \
+    fzf --prompt="npm script> " \
+        --delimiter='\t' \
+        --with-nth=1 \
+        --preview 'echo "Command: $(echo {} | cut -f2)"' \
+        --preview-window=bottom:3:wrap | cut -f1)
+  if [[ -n "$script" ]]; then
+    echo "▶  npm run $script"
+    npm run "$script"
+  fi
+}
+
+# ── Python / uv ────────────────────────────────────────────────────────────────
+
+py-run() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: py-run <script.py> [args…]" >&2
+    return 1
+  fi
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "Error: uv is not installed" >&2
+    return 1
+  fi
+  uv run "$@"
+}

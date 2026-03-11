@@ -1,3 +1,5 @@
 source ~/.config/bash/aliases
 source ~/.config/bash/functions
 source ~/.config/bash/qsv-helpers
+source ~/.config/bash/jq-helpers
+source ~/.config/bash/dev-helpers

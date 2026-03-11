@@ -83,6 +83,72 @@ All functions wrap `qsv` and pipe output through `bat`/`batcat` for syntax-highl
 | `csv-diff <before> <after>` | Added and removed rows (`qsv diff`) |
 | `csv-compare <before> <after>` | Side-by-side row/col/null-count summary with delta |
 
+### JSON / jq Helper Functions
+
+Sourced from `bash/.config/bash/jq-helpers` via `~/.config/bash/rc`.
+All functions validate JSON with `jq` and pipe output through `bat`/`batcat`.
+
+**One-file inspection**
+
+| Command | Description |
+|---------|-------------|
+| `json-peek <file>` | Overview: root type, key/item count, top-level keys |
+| `json-pp <file> [path]` | Pretty-print (optionally at a jq path) |
+| `json-keys <file>` | List all dot-notation leaf paths |
+| `json-len <file> [path]` | Count items at a jq path (default: root) |
+| `json-search <file> <term>` | Find paths whose value contains a string |
+
+**Two-file comparison (pre / post ETL)**
+
+| Command | Description |
+|---------|-------------|
+| `json-diff <before> <after>` | Structural diff of two JSON files |
+| `json-compare <before> <after>` | Key-set / item-count comparison with delta |
+
+**Conversion**
+
+| Command | Description |
+|---------|-------------|
+| `json-to-csv <file> [path]` | Convert array of objects → CSV (via jq `@csv`) |
+
+### Developer Productivity Helpers
+
+Sourced from `bash/.config/bash/dev-helpers` via `~/.config/bash/rc`.
+Wraps `ripgrep`, `fd`, `fzf`, `eza`, `uv`, and `npm` into ergonomic shortcuts.
+
+**Search & navigation**
+
+| Command | Description |
+|---------|-------------|
+| `rg-fzf [dir]` | Live ripgrep search with fzf and bat preview |
+| `fd-fzf [dir]` | Interactive file picker with bat preview |
+| `preview <file>` | Smart file preview (auto-routes CSV/JSON/plaintext) |
+
+**Filesystem**
+
+| Command | Description |
+|---------|-------------|
+| `lt [dir] [depth]` | Tree listing via `eza` (default depth: 2) |
+| `sizes [dir]` | Top 20 largest files under a directory |
+
+**Process & ports**
+
+| Command | Description |
+|---------|-------------|
+| `port-who <port>` | Show which process is listening on a port |
+
+**Node / npm**
+
+| Command | Description |
+|---------|-------------|
+| `npm-scripts` | fzf picker to select and run a `package.json` script |
+
+**Python / uv**
+
+| Command | Description |
+|---------|-------------|
+| `py-run <script> [args…]` | Run a Python script via `uv run` |
+
 ### Shell and Prompt Experience
 
 From `bash/` and `starship/`:
@@ -116,7 +182,9 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 │   ├── .bashrc
 │   └── .config/bash/
 │       ├── aliases
+│       ├── dev-helpers
 │       ├── functions
+│       ├── jq-helpers
 │       ├── qsv-helpers
 │       └── rc
 ├── starship/

@@ -1,0 +1,205 @@
+
+# =====================
+# JSON / jq Helpers
+# =====================
+# Requires: jq
+# Enhanced output with: bat/batcat (pretty-print), fzf (interactive key selection)
+#
+# One-file commands
+#   json-peek    <file>           – overview: type, key/item count, top-level keys
+#   json-pp      <file> [path]    – pretty-print (optionally at jq path)
+#   json-keys    <file>           – list all dot-notation leaf paths
+#   json-len     <file> [path]    – count items at a jq path (default: root)
+#   json-search  <file> <term>    – find paths whose value matches a string/regex
+#
+# Two-file commands (pre / post ETL)
+#   json-diff    <before> <after> – side-by-side structural diff
+#   json-compare <before> <after> – key-set and top-level type comparison
+#
+# Conversion
+#   json-to-csv  <file> [path]    – convert array of objects to CSV via jq + qsv
+
+_json_bat() {
+  if command -v batcat >/dev/null 2>&1; then
+    batcat "$@"
+  elif command -v bat >/dev/null 2>&1; then
+    bat "$@"
+  else
+    cat "$@"
+  fi
+}
+
+_json_check() {
+  local file="$1"
+  if [[ -z "$file" ]]; then
+    echo "Usage: ${FUNCNAME[1]} <file.json> [...]" >&2
+    return 1
+  fi
+  if [[ ! -f "$file" ]]; then
+    echo "Error: file not found: $file" >&2
+    return 1
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is not installed" >&2
+    return 1
+  fi
+  if ! jq empty "$file" 2>/dev/null; then
+    echo "Error: invalid JSON in $file" >&2
+    return 1
+  fi
+}
+
+json-peek() {
+  _json_check "$1" || return 1
+  local file="$1"
+  local type item_count key_count
+  type=$(jq -r 'type' "$file")
+  echo "📄 File : $file"
+  echo "🏷️  Type : $type"
+  case "$type" in
+    array)
+      item_count=$(jq 'length' "$file")
+      echo "📊 Items: $item_count"
+      echo ""
+      echo "── First item keys ──────────────────"
+      jq -r '.[0] | if type == "object" then keys[] else "  (non-object items)" end' "$file" 2>/dev/null || true
+      ;;
+    object)
+      key_count=$(jq '[keys[]] | length' "$file")
+      echo "🔑 Keys : $key_count"
+      echo ""
+      echo "── Top-level keys ───────────────────"
+      jq -r 'keys[]' "$file"
+      ;;
+    *)
+      echo ""
+      echo "── Value ────────────────────────────"
+      jq '.' "$file" | _json_bat --language=json --style=plain --color=always
+      ;;
+  esac
+}
+
+json-pp() {
+  _json_check "$1" || return 1
+  local file="$1" path="${2:-.}"
+  jq "$path" "$file" | _json_bat --language=json --style=plain --color=always
+}
+
+json-keys() {
+  _json_check "$1" || return 1
+  local file="$1"
+  echo "🔑 Leaf paths in: $file"
+  echo ""
+  # Walk the JSON tree and print all paths as dot-notation
+  jq -r '[paths(scalars)] | .[] | map(tostring) | join(".")' "$file"
+}
+
+json-len() {
+  _json_check "$1" || return 1
+  local file="$1" path="${2:-.}"
+  local len
+  len=$(jq "${path} | length" "$file" 2>/dev/null) || {
+    echo "Error: invalid jq path '$path'" >&2
+    return 1
+  }
+  echo "📏 Length of '$path' in $file: $len"
+}
+
+json-search() {
+  _json_check "$1" || return 1
+  local file="$1" term="${2:-}"
+  if [[ -z "$term" ]]; then
+    echo "Usage: json-search <file.json> <term>" >&2
+    return 1
+  fi
+  echo "🔍 Paths matching '$term' in: $file"
+  echo ""
+  # Find all paths whose value contains the search term (case-insensitive string match)
+  jq -r --arg t "$term" '
+    [paths(scalars)] |
+    .[] |
+    . as $p |
+    ([$p] | [map(tostring)] | .[0] | join(".")) as $dotpath |
+    (getpath($p) | tostring) as $v |
+    if ($v | ascii_downcase | contains($t | ascii_downcase)) then "\($dotpath) = \($v)" else empty end
+  ' "$file"
+}
+
+json-diff() {
+  if [[ $# -lt 2 ]]; then
+    echo "Usage: json-diff <before.json> <after.json>" >&2
+    return 1
+  fi
+  _json_check "$1" || return 1
+  _json_check "$2" || return 1
+  local before="$1" after="$2"
+  echo "🔄 Diff: $before → $after"
+  echo ""
+  diff <(jq --sort-keys '.' "$before") <(jq --sort-keys '.' "$after") | \
+    _json_bat --language=diff --style=plain --color=always
+}
+
+json-compare() {
+  if [[ $# -lt 2 ]]; then
+    echo "Usage: json-compare <before.json> <after.json>" >&2
+    return 1
+  fi
+  _json_check "$1" || return 1
+  _json_check "$2" || return 1
+  local before="$1" after="$2"
+  local type_before type_after
+  type_before=$(jq -r 'type' "$before")
+  type_after=$(jq -r 'type' "$after")
+
+  echo "📊 Compare: $before → $after"
+  echo ""
+  printf "%-20s  %-20s  %-20s\n" "Metric" "Before" "After"
+  printf "%-20s  %-20s  %-20s\n" "────────────────────" "────────────────────" "────────────────────"
+  printf "%-20s  %-20s  %-20s\n" "Root type" "$type_before" "$type_after"
+  printf "%-20s  %-20s  %-20s\n" "Length" "$(jq 'length' "$before")" "$(jq 'length' "$after")"
+
+  if [[ "$type_before" == "object" && "$type_after" == "object" ]]; then
+    local keys_before keys_after added removed
+    keys_before=$(jq -r 'keys[]' "$before" | sort)
+    keys_after=$(jq -r 'keys[]' "$after" | sort)
+    added=$(comm -13 <(echo "$keys_before") <(echo "$keys_after"))
+    removed=$(comm -23 <(echo "$keys_before") <(echo "$keys_after"))
+    echo ""
+    [[ -n "$added" ]] && echo "➕ Added keys  : $(echo "$added" | tr '\n' ' ')"
+    [[ -n "$removed" ]] && echo "➖ Removed keys: $(echo "$removed" | tr '\n' ' ')"
+    [[ -z "$added" && -z "$removed" ]] && echo "✅ Key set unchanged"
+  elif [[ "$type_before" == "array" && "$type_after" == "array" ]]; then
+    local delta
+    delta=$(( $(jq 'length' "$after") - $(jq 'length' "$before") ))
+    echo ""
+    if [[ $delta -gt 0 ]]; then
+      echo "➕ Item delta: +$delta items added"
+    elif [[ $delta -lt 0 ]]; then
+      echo "➖ Item delta: $delta items removed"
+    else
+      echo "✅ Item count unchanged"
+    fi
+  fi
+}
+
+json-to-csv() {
+  _json_check "$1" || return 1
+  local file="$1" path="${2:-.[]}"
+  if ! command -v qsv >/dev/null 2>&1; then
+    echo "Error: qsv is not installed (required for json-to-csv)" >&2
+    return 1
+  fi
+  # Validate: only allow safe jq path characters to prevent command injection
+  if [[ "$path" != ".[]" && ! "$path" =~ ^(\.[a-zA-Z0-9_]+((\[\]|\[[0-9]+\]))?)+(\[\])?$ ]]; then
+    echo "Error: unsafe jq path '$path'. Use simple paths like '.items[]' or '.data.records[]'" >&2
+    return 1
+  fi
+  echo "📤 Converting $file (path: $path) → CSV"
+  echo ""
+  # Extract headers from the first object, then stream all values in order
+  jq -r "[ ${path} ] |
+    (.[0] | keys_unsorted) as \$keys |
+    (\$keys, (.[] | [ .[\$keys[]] ])) |
+    @csv" "$file" | \
+    _json_bat --language=csv --style=plain --color=always
+}
