@@ -131,3 +131,4 @@ eval "$(uv generate-shell-completion bash)"
 
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+export MANPAGER='nvim +Man!'

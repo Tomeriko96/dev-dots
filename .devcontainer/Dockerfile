@@ -17,7 +17,11 @@ RUN apt-get update && \
         jq \
         wget \
         gnupg \
-        openssh-client && \
+        openssh-client \
+        man-db \
+        w3m \
+        gawk \
+        zstd && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js LTS (for npm/Slidev and other Node-based tools)
@@ -118,6 +122,43 @@ RUN set -eux; \
     rm -f /tmp/csvlens.tar.xz; \
     csvlens --version
 
+# Install tealdeer (fast tldr client)
+RUN set -eux; \
+    TEALDEER_VERSION=$(curl -s https://api.github.com/repos/dbrgn/tealdeer/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    [ -z "$TEALDEER_VERSION" ] && { echo "ERROR: could not resolve tealdeer version"; exit 1; }; \
+    curl -Lo /usr/local/bin/tldr \
+        "https://github.com/dbrgn/tealdeer/releases/download/${TEALDEER_VERSION}/tealdeer-linux-x86_64-musl"; \
+    chmod +x /usr/local/bin/tldr; \
+    tldr --version
+
+# Download Arch Wiki offline documentation (for wikiman arch source)
+RUN set -eux; \
+    PKG_JSON=$(curl -s "https://archlinux.org/packages/extra/any/arch-wiki-docs/json/"); \
+    PKG_VER=$(echo "$PKG_JSON" | jq -r '.pkgver'); \
+    PKG_REL=$(echo "$PKG_JSON" | jq -r '.pkgrel'); \
+    [ -z "$PKG_VER" ] && { echo "ERROR: could not resolve arch-wiki-docs version"; exit 1; }; \
+    PKG_FILE="arch-wiki-docs-${PKG_VER}-${PKG_REL}-any.pkg.tar.zst"; \
+    curl -Lo "/tmp/${PKG_FILE}" \
+        "https://geo.mirror.pkgbuild.com/extra/os/any/${PKG_FILE}"; \
+    mkdir -p /tmp/arch-wiki-extract; \
+    tar -xf "/tmp/${PKG_FILE}" -C /tmp/arch-wiki-extract; \
+    mkdir -p /usr/share/doc/arch-wiki-docs; \
+    cp -r /tmp/arch-wiki-extract/usr/share/doc/arch-wiki-docs/. /usr/share/doc/arch-wiki-docs/; \
+    rm -rf "/tmp/${PKG_FILE}" /tmp/arch-wiki-extract
+
+# Install wikiman (wiki documentation manager)
+RUN set -eux; \
+    WIKIMAN_VERSION=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest \
+        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    [ -z "$WIKIMAN_VERSION" ] && { echo "ERROR: could not resolve wikiman version"; exit 1; }; \
+    curl -Lo /tmp/wikiman.tar.gz \
+        "https://github.com/filiparag/wikiman/archive/refs/tags/${WIKIMAN_VERSION}.tar.gz"; \
+    tar -C /tmp -xzf /tmp/wikiman.tar.gz; \
+    WIKIMAN_DIR=$(find /tmp -maxdepth 1 -name 'wikiman-*' -type d | head -n1); \
+    make -C "$WIKIMAN_DIR" install; \
+    rm -rf /tmp/wikiman.tar.gz "$WIKIMAN_DIR"
+
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
     locale-gen
@@ -196,6 +237,9 @@ RUN curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.s
 # Bootstrap LazyVim starter config (plugins are downloaded on first nvim launch)
 RUN git clone --depth=1 https://github.com/LazyVim/starter /home/${USERNAME}/.config/nvim && \
     rm -rf /home/${USERNAME}/.config/nvim/.git
+
+# Pre-populate tealdeer (tldr) page cache
+RUN tldr --update && echo "tealdeer cache updated" || echo "WARNING: tealdeer cache update failed; run 'tldr --update' manually"
 
 # Default command
 CMD ["bash"]
