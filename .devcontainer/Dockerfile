@@ -106,6 +106,18 @@ RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
     rm -rf /var/lib/apt/lists/* && \
     rm /etc/apt/sources.list.d/qsv.list
 
+# Install csvlens (interactive CSV viewer)
+RUN set -eux; \
+    curl -Lo /tmp/csvlens.tar.xz \
+        "https://github.com/YS-L/csvlens/releases/latest/download/csvlens-x86_64-unknown-linux-gnu.tar.xz"; \
+    tar -C /tmp -xJf /tmp/csvlens.tar.xz; \
+    CSVLENS_BIN=$(find /tmp -maxdepth 2 -name 'csvlens' -type f | head -n1); \
+    [ -z "$CSVLENS_BIN" ] && { echo "ERROR: csvlens binary not found after extraction"; exit 1; }; \
+    mv "$CSVLENS_BIN" /usr/local/bin/csvlens; \
+    chmod +x /usr/local/bin/csvlens; \
+    rm -f /tmp/csvlens.tar.xz; \
+    csvlens --version
+
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
     locale-gen
