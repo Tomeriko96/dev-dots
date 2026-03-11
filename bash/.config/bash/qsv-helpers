@@ -1,0 +1,198 @@
+
+# =====================
+# CSV / qsv Helpers
+# =====================
+# Requires: qsv
+# Enhanced output with: bat/batcat (pretty-print), fzf (interactive column selection)
+#
+# One-file commands
+#   csv-peek    <file>        – overview: row/col count, headers, first 5 rows
+#   csv-summary <file>        – full statistical summary (qsv stats --everything)
+#   csv-schema  <file>        – inferred JSON Schema (qsv schema)
+#   csv-freq    <file> [col]  – frequency table; fzf column picker if col omitted
+#   csv-sample  <file> [n]    – n random rows (default: 10)
+#   csv-nulls   <file>        – null/empty counts per column
+#   csv-search  <file> <pat>  – rows matching regex pattern
+#
+# Two-file commands (pre / post ETL)
+#   csv-diff    <before> <after>  – added / removed rows
+#   csv-compare <before> <after>  – side-by-side row/col/null-count comparison
+
+_csv_bat() {
+  if command -v batcat >/dev/null 2>&1; then
+    batcat "$@"
+  elif command -v bat >/dev/null 2>&1; then
+    bat "$@"
+  else
+    cat "$@"
+  fi
+}
+
+_csv_check() {
+  local file="$1"
+  if [[ -z "$file" ]]; then
+    echo "Usage: ${FUNCNAME[1]} <file.csv> [...]" >&2
+    return 1
+  fi
+  if [[ ! -f "$file" ]]; then
+    echo "Error: file not found: $file" >&2
+    return 1
+  fi
+  if ! command -v qsv >/dev/null 2>&1; then
+    echo "Error: qsv is not installed" >&2
+    return 1
+  fi
+}
+
+# Strip leading row numbers from qsv headers output
+_csv_headers() {
+  qsv headers "$1" | sed 's/^[0-9]*[[:space:]]*//'
+}
+
+csv-peek() {
+  _csv_check "$1" || return 1
+  local file="$1" rows cols
+  rows=$(qsv count "$file")
+  cols=$(qsv headers "$file" | wc -l)
+  echo "📄 File    : $file"
+  echo "📊 Rows    : $rows"
+  echo "📋 Columns : $cols"
+  echo ""
+  echo "── Headers ──────────────────────────"
+  qsv headers "$file"
+  echo ""
+  echo "── First 5 rows ─────────────────────"
+  qsv slice --len 5 "$file" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-summary() {
+  _csv_check "$1" || return 1
+  local file="$1"
+  echo "📊 Stats for: $file"
+  echo ""
+  qsv stats --everything "$file" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-schema() {
+  _csv_check "$1" || return 1
+  local file="$1"
+  # qsv schema writes <file>.schema.json next to the input; clean it up after display
+  local schema_file="${file}.schema.json"
+  echo "🔍 Schema for: $file"
+  echo ""
+  if qsv schema "$file" 2>/dev/null && [[ -f "$schema_file" ]]; then
+    _csv_bat --language=json --style=plain --color=always "$schema_file"
+    rm -f "$schema_file"
+  else
+    echo "(qsv schema unavailable; showing column types from stats)" >&2
+    qsv stats "$file" | qsv select field,type | _csv_bat --language=csv --style=plain --color=always
+  fi
+}
+
+csv-freq() {
+  _csv_check "$1" || return 1
+  local file="$1" col="${2:-}"
+  if [[ -z "$col" ]]; then
+    if command -v fzf >/dev/null 2>&1; then
+      col=$(_csv_headers "$file" | fzf --prompt="Select column > ")
+      [[ -z "$col" ]] && return 0
+    else
+      echo "Usage: csv-freq <file.csv> <column>" >&2
+      return 1
+    fi
+  fi
+  echo "📈 Frequency for '$col' in: $file"
+  echo ""
+  qsv frequency --select "$col" "$file" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-sample() {
+  _csv_check "$1" || return 1
+  local file="$1" n="${2:-10}"
+  echo "🎲 Sample $n rows from: $file"
+  echo ""
+  qsv sample "$n" "$file" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-nulls() {
+  _csv_check "$1" || return 1
+  local file="$1"
+  echo "🕳️  Null/empty counts for: $file"
+  echo ""
+  qsv stats "$file" | qsv select field,nullcount | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-search() {
+  _csv_check "$1" || return 1
+  local file="$1" pattern="${2:-}"
+  if [[ -z "$pattern" ]]; then
+    echo "Usage: csv-search <file.csv> <regex-pattern>" >&2
+    return 1
+  fi
+  echo "🔍 Rows matching '$pattern' in: $file"
+  echo ""
+  qsv search "$pattern" "$file" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-diff() {
+  if [[ $# -lt 2 ]]; then
+    echo "Usage: csv-diff <before.csv> <after.csv>" >&2
+    return 1
+  fi
+  _csv_check "$1" || return 1
+  _csv_check "$2" || return 1
+  local before="$1" after="$2"
+  echo "🔄 Diff: $before → $after"
+  echo ""
+  qsv diff "$before" "$after" | _csv_bat --language=csv --style=plain --color=always
+}
+
+csv-compare() {
+  if [[ $# -lt 2 ]]; then
+    echo "Usage: csv-compare <before.csv> <after.csv>" >&2
+    return 1
+  fi
+  _csv_check "$1" || return 1
+  _csv_check "$2" || return 1
+  local before="$1" after="$2"
+  local rows_before rows_after cols_before cols_after delta
+  rows_before=$(qsv count "$before")
+  rows_after=$(qsv count "$after")
+  cols_before=$(qsv headers "$before" | wc -l)
+  cols_after=$(qsv headers "$after" | wc -l)
+  delta=$((rows_after - rows_before))
+
+  echo "📊 Compare: $before → $after"
+  echo ""
+  printf "%-20s  %-15s  %-15s\n" "Metric" "Before" "After"
+  printf "%-20s  %-15s  %-15s\n" "────────────────────" "───────────────" "───────────────"
+  printf "%-20s  %-15s  %-15s\n" "Rows" "$rows_before" "$rows_after"
+  printf "%-20s  %-15s  %-15s\n" "Columns" "$cols_before" "$cols_after"
+
+  if [[ $delta -gt 0 ]]; then
+    echo ""
+    echo "➕ Row delta: +$delta rows added"
+  elif [[ $delta -lt 0 ]]; then
+    echo ""
+    echo "➖ Row delta: $delta rows removed"
+  else
+    echo ""
+    echo "✅ Row count unchanged"
+  fi
+
+  local hdrs_before hdrs_after added_cols removed_cols
+  hdrs_before=$(_csv_headers "$before" | sort)
+  hdrs_after=$(_csv_headers "$after" | sort)
+  added_cols=$(comm -13 <(echo "$hdrs_before") <(echo "$hdrs_after"))
+  removed_cols=$(comm -23 <(echo "$hdrs_before") <(echo "$hdrs_after"))
+
+  [[ -n "$added_cols" ]] && echo "➕ Added columns  : $(echo "$added_cols" | tr '\n' ' ')"
+  [[ -n "$removed_cols" ]] && echo "➖ Removed columns: $(echo "$removed_cols" | tr '\n' ' ')"
+
+  echo ""
+  echo "── Null counts (before) ───────────────────────"
+  qsv stats "$before" | qsv select field,nullcount | _csv_bat --language=csv --style=plain --color=always
+  echo ""
+  echo "── Null counts (after)  ───────────────────────"
+  qsv stats "$after" | qsv select field,nullcount | _csv_bat --language=csv --style=plain --color=always
+}

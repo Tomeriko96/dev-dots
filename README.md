@@ -59,6 +59,30 @@ Available git TUI tools:
 | gh-dash | `gh dash` | GitHub dashboard TUI (PRs, issues, notifications) |
 | delta | automatic | Syntax-highlighted diffs for every `git diff` / `git log -p` |
 
+### CSV / qsv Helper Functions
+
+Sourced from `bash/.config/bash/qsv-helpers` via `~/.config/bash/rc`.
+All functions wrap `qsv` and pipe output through `bat`/`batcat` for syntax-highlighted display.
+
+**One-file inspection**
+
+| Command | Description |
+|---------|-------------|
+| `csv-peek <file>` | Overview: row/col count, headers list, first 5 rows |
+| `csv-summary <file>` | Full statistical summary (`qsv stats --everything`) |
+| `csv-schema <file>` | Inferred JSON Schema (`qsv schema`) |
+| `csv-freq <file> [col]` | Frequency table; opens fzf column picker when `col` is omitted |
+| `csv-sample <file> [n]` | `n` random rows (default 10) |
+| `csv-nulls <file>` | Null/empty value counts per column |
+| `csv-search <file> <pat>` | Rows matching a regex pattern |
+
+**Two-file comparison (pre / post ETL)**
+
+| Command | Description |
+|---------|-------------|
+| `csv-diff <before> <after>` | Added and removed rows (`qsv diff`) |
+| `csv-compare <before> <after>` | Side-by-side row/col/null-count summary with delta |
+
 ### Shell and Prompt Experience
 
 From `bash/` and `starship/`:
@@ -93,6 +117,7 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 │   └── .config/bash/
 │       ├── aliases
 │       ├── functions
+│       ├── qsv-helpers
 │       └── rc
 ├── starship/
 │   └── .config/starship.toml
