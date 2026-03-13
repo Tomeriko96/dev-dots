@@ -1,5 +1,23 @@
 
 # =====================
+# Onboarding Wizard
+# =====================
+onboard() {
+  # Source the wizard script so that inner calls to claude-setup (a shell
+  # function defined in this file) work correctly inside the subprocess.
+  local script="$HOME/.devcontainer/onboard.sh"
+  if [[ ! -f "$script" ]]; then
+    echo "[onboard] Wizard script not found at $script" >&2
+    return 1
+  fi
+  # Export claude-setup into the bash subprocess so that onboard.sh can detect
+  # and call it via 'declare -f claude-setup', falling back to its own inline
+  # implementation when the export is unavailable (e.g. older bash versions).
+  export -f claude-setup 2>/dev/null || true
+  bash "$script"
+}
+
+# =====================
 # Claude Setup
 # =====================
 claude-setup() {

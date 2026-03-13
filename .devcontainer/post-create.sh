@@ -27,5 +27,9 @@ echo "💡 Tip: Run 'tdl opencode' to open a tmux dev layout with OpenCode"
 echo "💡 Tip: Run 'claude-setup' to set your ANTHROPIC_FOUNDRY_API_KEY and ANTHROPIC_FOUNDRY_RESOURCE"
 echo "📺 Tmux layouts: tdl <ai>, tdlm <ai>, tsl <count> <cmd>"
 
+echo ""
+echo "🧭 Run 'onboard' to launch the interactive post-build checklist wizard"
+echo "   (gh auth login + opencode auth + claude-setup in one guided flow)"
+
 echo "✅ Post-create complete. Run 'nvim .' or 'tdl opencode' to get started."
 
