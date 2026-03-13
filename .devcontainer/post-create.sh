@@ -29,47 +29,43 @@ echo "📋 Collecting tool versions → $TOOL_VERSIONS_FILE"
   echo "# Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
   echo ""
 
-  _ver() {
-    local name="$1"; shift
-    if command -v "$name" >/dev/null 2>&1; then
-      # Run the version command; keep only the first non-empty line
-      local ver
-      ver=$("$@" 2>&1 | grep -m1 '.' || true)
-      echo "$name: $ver"
-    else
-      echo "$name: (not found)"
-    fi
-  }
+  # --- Section 1: all dpkg/apt-managed system packages ---
+  echo "## System packages (dpkg)"
+  dpkg-query -W -f='  ${Package}: ${Version}\n' 2>/dev/null | sort
+  echo ""
 
-  _ver git        git --version
-  _ver lazygit    lazygit --version
-  _ver gh         gh --version
-  _ver delta      delta --version
-  _ver nvim       nvim --version
-  _ver node       node --version
-  _ver npm        npm --version
-  _ver uv         uv --version
-  _ver starship   starship --version
-  _ver zoxide     zoxide --version
-  _ver fzf        fzf --version
-  _ver rg         rg --version
-  _ver bat        bat --version
-  _ver eza        eza --version
-  _ver jq         jq --version
-  _ver fdfind     fdfind --version
-  _ver qsv        qsv --version
-  _ver csvlens    csvlens --version
-  _ver Rscript    Rscript --version
-  _ver opencode   opencode --version
-  _ver tmux       tmux -V
-  _ver htop       htop --version
+  # --- Section 2: executables found in non-system PATH dirs ---
+  # Standard system dirs (/usr/bin, /bin, /sbin, /usr/sbin) are already
+  # fully covered by dpkg above; scanning them again would be redundant and slow.
+  # This section only probes user/local dirs (e.g. /usr/local/bin, ~/.local/bin)
+  # where manually-installed tools live.
+  # Uses `timeout 2` per binary to avoid hangs; tries --version then -V.
+  echo "## PATH executables (non-system)"
+  declare -A _seen
+  while IFS= read -r _dir; do
+    [ -d "$_dir" ] || continue
+    # Skip standard system directories already covered by dpkg
+    case "$_dir" in /usr/bin|/bin|/sbin|/usr/sbin) continue ;; esac
+    for _bin in "$_dir"/*; do
+      [ -x "$_bin" ] && [ -f "$_bin" ] || continue
+      _name=$(basename "$_bin")
+      [ "${_seen[$_name]+_}" ] && continue   # skip duplicates across PATH dirs
+      _seen["$_name"]=1
+      _ver=$(timeout 2 "$_bin" --version 2>&1 | grep -m1 '.' 2>/dev/null || true)
+      [ -z "$_ver" ] && _ver=$(timeout 2 "$_bin" -V 2>&1 | grep -m1 '.' 2>/dev/null || true)
+      [ -z "$_ver" ] && _ver="(version unknown)"
+      echo "  $_name: $_ver"
+    done
+  done < <(echo "$PATH" | tr ':' '\n' | awk '!seen[$0]++') | sort
 
-  # gh-dash is not on PATH; check its binary directly
+  # gh-dash lives outside PATH; append it separately
+  echo ""
+  echo "## gh extensions"
   if [[ -x "$GH_DASH_BIN" ]]; then
-    local_ver=$("$GH_DASH_BIN" --version 2>&1 | grep -m1 '.' || true)
-    echo "gh-dash: $local_ver"
+    _gdver=$("$GH_DASH_BIN" --version 2>&1 | grep -m1 '.' || true)
+    echo "  gh-dash: $_gdver"
   else
-    echo "gh-dash: (not found)"
+    echo "  gh-dash: (not found)"
   fi
 } > "$TOOL_VERSIONS_FILE"
 
