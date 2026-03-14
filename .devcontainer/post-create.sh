@@ -6,7 +6,7 @@ echo "👤 Running as: $(id)"
 
 # Verify key CLIs are available (all installed via Dockerfile)
 echo "✅ CLIs available:"
-for cli in nvim opencode claude uv starship zoxide node npm Rscript csvlens; do
+for cli in nvim opencode claude uv starship zoxide node npm csvlens; do
   which "$cli" 2>/dev/null && echo "  ✅ $cli: $(which $cli)" || echo "  ⚠️  $cli: missing"
 done
 

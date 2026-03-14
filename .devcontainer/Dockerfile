@@ -25,20 +25,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Install R (latest from CRAN via DEB822 sources format)
-RUN curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' \
-        | gpg --dearmor \
-        | tee /usr/share/keyrings/cran.gpg > /dev/null && \
-    printf 'Types: deb\nURIs: https://cloud.r-project.org/bin/linux/debian\nSuites: bookworm-cran40/\nSigned-By: /usr/share/keyrings/cran.gpg\n' \
-        > /etc/apt/sources.list.d/cran.sources && \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        r-base \
-        r-base-dev && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Remove CRAN sources intentionally: keeps image clean; R is installed and needs no apt-based updates
-    rm /etc/apt/sources.list.d/cran.sources
-
 # Install GitHub CLI (gh)
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
         -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \

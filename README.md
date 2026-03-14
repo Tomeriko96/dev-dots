@@ -24,7 +24,6 @@ Defined in `.devcontainer/Dockerfile`:
 - Data and search utilities: `ripgrep`, `qsv`, `fzf`
 - Modern shell utilities: `eza` (ls replacement)
 - Node.js LTS (for npm and Node-based tools)
-- R base (for R programming and data science)
 - Latest Neovim install
 - Non-root `dev` user and workspace-ready permissions
 - CLI installs for `opencode`, `uv`, `starship`, and `zoxide`
@@ -37,7 +36,7 @@ Defined in `.devcontainer/Dockerfile`:
 
 Defined in `.devcontainer/post-create.sh`:
 
-- CLI availability verification (nvim, opencode, uv, starship, zoxide, node, npm, Rscript)
+- CLI availability verification (nvim, opencode, uv, starship, zoxide, node, npm, csvlens)
 - Git tooling availability summary on startup
 - Helpful tips printed on startup (lazygit, gh auth login, gh dash, tdl opencode)
 
