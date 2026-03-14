@@ -15,6 +15,14 @@ onboard() {
   # implementation when the export is unavailable (e.g. older bash versions).
   export -f claude-setup 2>/dev/null || true
   bash "$script"
+  # The wizard runs in a subprocess and cannot export env vars back to us.
+  # Re-source the Claude secrets file here in the parent shell so that
+  # ANTHROPIC_FOUNDRY_API_KEY and ANTHROPIC_FOUNDRY_RESOURCE are available
+  # in the current interactive session after the wizard finishes.
+  local secrets="$HOME/.claude/secrets.sh"
+  if [[ -f "$secrets" ]] && bash -n "$secrets" 2>/dev/null; then
+    source "$secrets"
+  fi
 }
 
 # =====================

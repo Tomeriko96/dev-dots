@@ -163,7 +163,7 @@ run_claude_setup() {
   _section "Step 3 / 3 — Claude / Anthropic Foundry setup"
   echo ""
   _info "This sets your $(_bold 'ANTHROPIC_FOUNDRY_API_KEY') and $(_bold 'ANTHROPIC_FOUNDRY_RESOURCE')"
-  _info "in $(_dim '~/.claude/secrets.sh') and sources them into the current shell."
+  _info "in $(_dim '~/.claude/secrets.sh') — they will be sourced into your shell when the wizard exits."
   echo ""
 
   if _claude_configured; then
@@ -205,7 +205,7 @@ TMPL
       return 1
     fi
     if source "$secrets"; then
-      _done "Claude secrets loaded into the current shell."
+      _done "Claude secrets saved. They will be loaded into your shell when the wizard exits."
     else
       _error "Failed to source $secrets. Please check the file for syntax errors."
       return 1
