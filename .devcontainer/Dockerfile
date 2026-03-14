@@ -124,11 +124,8 @@ RUN set -eux; \
 
 # Install tealdeer (fast tldr client)
 RUN set -eux; \
-    TEALDEER_VERSION=$(curl -s https://api.github.com/repos/dbrgn/tealdeer/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
-    [ -z "$TEALDEER_VERSION" ] && { echo "ERROR: could not resolve tealdeer version"; exit 1; }; \
-    curl -Lo /usr/local/bin/tldr \
-        "https://github.com/dbrgn/tealdeer/releases/download/${TEALDEER_VERSION}/tealdeer-linux-x86_64-musl"; \
+    curl -fLo /usr/local/bin/tldr \
+        "https://github.com/dbrgn/tealdeer/releases/latest/download/tealdeer-linux-x86_64-musl"; \
     chmod +x /usr/local/bin/tldr; \
     tldr --version
 
