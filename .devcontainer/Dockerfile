@@ -18,10 +18,7 @@ RUN apt-get update && \
         wget \
         gnupg \
         openssh-client \
-        man-db \
-        w3m \
-        gawk \
-        zstd && \
+        man-db && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js LTS (for npm/Slidev and other Node-based tools)
@@ -128,31 +125,6 @@ RUN set -eux; \
         "https://github.com/dbrgn/tealdeer/releases/latest/download/tealdeer-linux-x86_64-musl"; \
     chmod +x /usr/local/bin/tldr; \
     tldr --version
-
-# Download Arch Wiki offline documentation (for wikiman arch source)
-RUN set -eux; \
-    PKG_JSON=$(curl -fSs "https://archlinux.org/packages/extra/any/arch-wiki-docs/json/"); \
-    PKG_FILE=$(echo "$PKG_JSON" | jq -r '.filename'); \
-    { [ -z "$PKG_FILE" ] || [ "$PKG_FILE" = "null" ]; } && { echo "ERROR: could not resolve arch-wiki-docs filename"; exit 1; }; \
-    curl -fLo "/tmp/${PKG_FILE}" \
-        "https://archive.archlinux.org/packages/a/arch-wiki-docs/${PKG_FILE}"; \
-    mkdir -p /tmp/arch-wiki-extract; \
-    tar -xf "/tmp/${PKG_FILE}" -C /tmp/arch-wiki-extract; \
-    mkdir -p /usr/share/doc/arch-wiki-docs; \
-    cp -r /tmp/arch-wiki-extract/usr/share/doc/arch-wiki-docs/. /usr/share/doc/arch-wiki-docs/; \
-    rm -rf "/tmp/${PKG_FILE}" /tmp/arch-wiki-extract
-
-# Install wikiman (wiki documentation manager)
-RUN set -eux; \
-    WIKIMAN_VERSION=$(curl -fsSL https://github.com/filiparag/wikiman/releases/latest \
-        -o /dev/null -w '%{url_effective}' | sed 's|.*/tag/||'); \
-    [ -z "$WIKIMAN_VERSION" ] && { echo "ERROR: could not resolve wikiman version"; exit 1; }; \
-    curl -fLo /tmp/wikiman.tar.gz \
-        "https://github.com/filiparag/wikiman/archive/refs/tags/${WIKIMAN_VERSION}.tar.gz"; \
-    tar -C /tmp -xzf /tmp/wikiman.tar.gz; \
-    WIKIMAN_DIR=$(find /tmp -maxdepth 1 -name 'wikiman-*' -type d | head -n1); \
-    make -C "$WIKIMAN_DIR" install; \
-    rm -rf /tmp/wikiman.tar.gz "$WIKIMAN_DIR"
 
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
