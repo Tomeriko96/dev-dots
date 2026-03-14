@@ -5,7 +5,7 @@
 onboard() {
   # Source the wizard script so that inner calls to claude-setup (a shell
   # function defined in this file) work correctly inside the subprocess.
-  local script="$HOME/.devcontainer/onboard.sh"
+  local script="$HOME/.onboard.sh"
   if [[ ! -f "$script" ]]; then
     echo "[onboard] Wizard script not found at $script" >&2
     return 1

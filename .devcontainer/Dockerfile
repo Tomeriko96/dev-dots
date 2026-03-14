@@ -165,6 +165,8 @@ COPY --chown=${USERNAME}:${USERNAME} starship/.config/starship.toml /home/${USER
 COPY --chown=${USERNAME}:${USERNAME} .devcontainer/tmux.conf /home/${USERNAME}/.tmux.conf
 COPY --chown=${USERNAME}:${USERNAME} .devcontainer/tmux-dev-layouts.sh /home/${USERNAME}/.tmux-dev-layouts.sh
 RUN chmod +x /home/${USERNAME}/.tmux-dev-layouts.sh
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/onboard.sh /home/${USERNAME}/.onboard.sh
+RUN chmod +x /home/${USERNAME}/.onboard.sh
 
 WORKDIR /workspace
 USER ${USERNAME}

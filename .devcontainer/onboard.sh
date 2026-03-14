@@ -10,7 +10,7 @@
 #   3. claude-setup        – Anthropic Foundry API key & resource name
 #
 # Run via the shell function:  onboard
-# Or directly:                 bash ~/.devcontainer/onboard.sh
+# Or directly:                 bash ~/.onboard.sh
 # =============================================================================
 
 # Note: -e is intentionally omitted.  The check helpers (_gh_authed etc.) use
