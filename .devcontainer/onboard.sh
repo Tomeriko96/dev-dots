@@ -6,7 +6,7 @@
 # fresh container build:
 #
 #   1. gh auth login       – primary GitHub account (git + gh CLI)
-#   2. opencode auth       – secondary GitHub account (GitHub Copilot in OpenCode)
+#   2. opencode auth login – secondary GitHub account (GitHub Copilot in OpenCode)
 #   3. claude-setup        – Anthropic Foundry API key & resource name
 #
 # Run via the shell function:  onboard
@@ -133,8 +133,8 @@ run_opencode_auth() {
   if _opencode_authed; then
     _done "A Copilot/GitHub provider entry already exists in the OpenCode config."
     echo ""
-    if ! _ask_yn "Run opencode auth again anyway?"; then
-      _skip "opencode auth"
+    if ! _ask_yn "Run opencode auth login again anyway?"; then
+      _skip "opencode auth login"
       return 0
     fi
   fi
@@ -145,16 +145,16 @@ run_opencode_auth() {
   fi
 
   echo ""
-  _info "Running: $(_bold 'opencode auth')"
+  _info "Running: $(_bold 'opencode auth login')"
   echo ""
-  opencode auth
+  opencode auth login
   local rc=$?
   echo ""
   if [[ $rc -eq 0 ]]; then
-    _done "opencode auth completed successfully."
+    _done "opencode auth login completed successfully."
   else
-    _error "opencode auth exited with code $rc."
-    _info "You can retry later with: $(_bold 'opencode auth')"
+    _error "opencode auth login exited with code $rc."
+    _info "You can retry later with: $(_bold 'opencode auth login')"
   fi
   return $rc
 }
@@ -231,7 +231,7 @@ print_summary() {
   if _opencode_authed; then
     _done "opencode  — Copilot provider configured"
   else
-    _pending "opencode  — $(_bold 'not configured')  →  run: $(_yellow 'opencode auth')"
+    _pending "opencode  — $(_bold 'not configured')  →  run: $(_yellow 'opencode auth login')"
   fi
 
   if _claude_configured; then
@@ -259,7 +259,7 @@ main() {
   # Quick pre-flight status
   echo -e "${BOLD}  Current status:${RESET}"
   if _gh_authed;       then _done "gh auth login";   else _pending "gh auth login"; fi
-  if _opencode_authed; then _done "opencode auth";   else _pending "opencode auth"; fi
+  if _opencode_authed; then _done "opencode auth login"; else _pending "opencode auth login"; fi
   if _claude_configured; then _done "claude-setup";  else _pending "claude-setup"; fi
   echo ""
 
