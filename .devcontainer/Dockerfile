@@ -131,13 +131,11 @@ RUN set -eux; \
 
 # Download Arch Wiki offline documentation (for wikiman arch source)
 RUN set -eux; \
-    PKG_JSON=$(curl -s "https://archlinux.org/packages/extra/any/arch-wiki-docs/json/"); \
-    PKG_VER=$(echo "$PKG_JSON" | jq -r '.pkgver'); \
-    PKG_REL=$(echo "$PKG_JSON" | jq -r '.pkgrel'); \
-    [ -z "$PKG_VER" ] && { echo "ERROR: could not resolve arch-wiki-docs version"; exit 1; }; \
-    PKG_FILE="arch-wiki-docs-${PKG_VER}-${PKG_REL}-any.pkg.tar.zst"; \
-    curl -Lo "/tmp/${PKG_FILE}" \
-        "https://geo.mirror.pkgbuild.com/extra/os/any/${PKG_FILE}"; \
+    PKG_JSON=$(curl -fSs "https://archlinux.org/packages/extra/any/arch-wiki-docs/json/"); \
+    PKG_FILE=$(echo "$PKG_JSON" | jq -r '.filename'); \
+    { [ -z "$PKG_FILE" ] || [ "$PKG_FILE" = "null" ]; } && { echo "ERROR: could not resolve arch-wiki-docs filename"; exit 1; }; \
+    curl -fLo "/tmp/${PKG_FILE}" \
+        "https://archive.archlinux.org/packages/a/arch-wiki-docs/${PKG_FILE}"; \
     mkdir -p /tmp/arch-wiki-extract; \
     tar -xf "/tmp/${PKG_FILE}" -C /tmp/arch-wiki-extract; \
     mkdir -p /usr/share/doc/arch-wiki-docs; \
@@ -146,10 +144,10 @@ RUN set -eux; \
 
 # Install wikiman (wiki documentation manager)
 RUN set -eux; \
-    WIKIMAN_VERSION=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    WIKIMAN_VERSION=$(curl -fsSL https://github.com/filiparag/wikiman/releases/latest \
+        -o /dev/null -w '%{url_effective}' | sed 's|.*/tag/||'); \
     [ -z "$WIKIMAN_VERSION" ] && { echo "ERROR: could not resolve wikiman version"; exit 1; }; \
-    curl -Lo /tmp/wikiman.tar.gz \
+    curl -fLo /tmp/wikiman.tar.gz \
         "https://github.com/filiparag/wikiman/archive/refs/tags/${WIKIMAN_VERSION}.tar.gz"; \
     tar -C /tmp -xzf /tmp/wikiman.tar.gz; \
     WIKIMAN_DIR=$(find /tmp -maxdepth 1 -name 'wikiman-*' -type d | head -n1); \
