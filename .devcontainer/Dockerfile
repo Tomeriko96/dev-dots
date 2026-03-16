@@ -1,17 +1,5 @@
 FROM debian:bookworm-slim
 
-# Re-enable man pages: bookworm-slim ships with a dpkg config that strips all
-# man pages during package installation (path-exclude=/usr/share/man/*).
-# We remove that exclusion before any installs so every subsequent apt-get
-# installation includes man pages.  The config file may not exist on all base
-# images, so the sed call is guarded with a file-existence check.
-RUN if [ -f /etc/dpkg/dpkg.cfg.d/docker ]; then \
-        sed -i '/path-exclude=\/usr\/share\/man/d' /etc/dpkg/dpkg.cfg.d/docker; \
-    fi && \
-    apt-get update && apt-get install --reinstall -y \
-        coreutils bash util-linux \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install all system dependencies first (including gnupg for qsv)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -29,8 +17,7 @@ RUN apt-get update && \
         jq \
         wget \
         gnupg \
-        openssh-client \
-        man-db && \
+        openssh-client && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js LTS (for npm/Slidev and other Node-based tools)
