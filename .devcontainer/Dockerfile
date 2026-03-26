@@ -4,12 +4,12 @@ FROM debian:bookworm-slim
 # This is the single place to update tool versions.
 # To upgrade a tool: change the value and rebuild.
 ARG LAZYGIT_VERSION="0.60.0"
-ARG DELTA_VERSION="0.19.1"
+ARG DELTA_VERSION="0.18.0"
 ARG RIPGREP_VERSION="15.1.0"
 ARG CSVLENS_VERSION="0.15.1"
 ARG TEALDEER_VERSION="1.8.1"
 ARG NEOVIM_VERSION="0.11.6"
-ARG GH_DASH_VERSION="4.23.2"
+ARG GH_DASH_VERSION="4.23.1"
 ARG YAZI_VERSION="26.1.22"
 # ─────────────────────────────────────────────────────────────────────────────
 
