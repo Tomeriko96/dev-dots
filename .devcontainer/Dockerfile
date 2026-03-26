@@ -108,10 +108,10 @@ RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
 # Using .zip instead of .deb to avoid heavy preview deps (ffmpeg, imagemagick, etc.)
 RUN set -eux; \
     curl -Lo /tmp/yazi.zip \
-        "https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-x86_64-unknown-linux-gnu.zip"; \
+        "https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-x86_64-unknown-linux-musl.zip"; \
     unzip -q /tmp/yazi.zip -d /tmp/yazi; \
-    mv /tmp/yazi/yazi-x86_64-unknown-linux-gnu/yazi /usr/local/bin/yazi; \
-    mv /tmp/yazi/yazi-x86_64-unknown-linux-gnu/ya /usr/local/bin/ya; \
+    mv /tmp/yazi/yazi-x86_64-unknown-linux-musl/yazi /usr/local/bin/yazi; \
+    mv /tmp/yazi/yazi-x86_64-unknown-linux-musl/ya /usr/local/bin/ya; \
     rm -rf /tmp/yazi /tmp/yazi.zip; \
     yazi --version
 
