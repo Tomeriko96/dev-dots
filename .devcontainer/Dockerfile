@@ -11,6 +11,9 @@ ARG TEALDEER_VERSION="1.8.1"
 ARG NEOVIM_VERSION="0.11.6"
 ARG GH_DASH_VERSION="4.23.1"
 ARG YAZI_VERSION="26.1.22"
+ARG STARSHIP_VERSION="1.24.2"
+ARG UV_VERSION="0.11.1"
+ARG ZOXIDE_VERSION="0.9.9"
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Install all system dependencies first (including gnupg for qsv)
@@ -158,7 +161,15 @@ RUN groupadd --gid ${GID} ${USERNAME} && \
     mkdir -p /workspace && chown ${USERNAME}:${USERNAME} /workspace
 
 # Install starship prompt system-wide (requires root, installs to /usr/local/bin)
-RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
+RUN curl -sS https://starship.rs/install.sh | sh -s -- -y --version v${STARSHIP_VERSION}
+
+# Install zoxide (smart cd replacement)
+RUN set -eux; \
+    curl -Lo /tmp/zoxide.deb \
+        "https://github.com/ajeetdsouza/zoxide/releases/download/v${ZOXIDE_VERSION}/zoxide_${ZOXIDE_VERSION}-1_amd64.deb"; \
+    dpkg -i /tmp/zoxide.deb; \
+    rm /tmp/zoxide.deb; \
+    zoxide --version
 
 # Copy dotfiles into the user home directory (baked into the image for instant availability)
 COPY --chown=${USERNAME}:${USERNAME} bash/.bashrc /home/${USERNAME}/.bashrc
@@ -183,10 +194,10 @@ ENV CLAUDE_CODE_USE_FOUNDRY=1 \
     ANTHROPIC_DEFAULT_SONNET_MODEL=claude-sonnet-4-6 \
     ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-6
 
-# Install OpenCode CLI
+# Install OpenCode CLI (unpinned: install script does not expose a version flag)
 RUN curl -fsSL https://opencode.ai/install | bash
 
-# Install Claude Code CLI
+# Install Claude Code CLI (unpinned: install script does not expose a version flag)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install gh-dash as a gh extension
@@ -198,10 +209,7 @@ RUN set -eux; \
     chmod +x "$GH_DASH_DIR/gh-dash"
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install zoxide (smart cd replacement; installs to ~/.local/bin)
-RUN curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+RUN curl -LsSf https://astral.sh/uv/install.sh | UV_VERSION=${UV_VERSION} sh
 
 # Bootstrap LazyVim starter config (plugins are downloaded on first nvim launch)
 RUN git clone --depth=1 https://github.com/LazyVim/starter /home/${USERNAME}/.config/nvim && \
