@@ -1,5 +1,18 @@
 FROM debian:bookworm-slim
 
+# ── Pinned versions ───────────────────────────────────────────────────────────
+# This is the single place to update tool versions.
+# To upgrade a tool: change the value and rebuild.
+ARG LAZYGIT_VERSION="0.60.0"
+ARG DELTA_VERSION="0.19.1"
+ARG RIPGREP_VERSION="15.1.0"
+ARG CSVLENS_VERSION="0.15.1"
+ARG TEALDEER_VERSION="1.8.1"
+ARG NEOVIM_VERSION="0.11.6"
+ARG GH_DASH_VERSION="4.23.2"
+ARG YAZI_VERSION="26.1.22"
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Install all system dependencies first (including gnupg for qsv)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -37,10 +50,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Install lazygit
 RUN set -eux; \
-    LAZYGIT_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/'); \
     curl -Lo /tmp/lazygit.tar.gz \
-        "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"; \
+        "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"; \
     tar -C /tmp -xzf /tmp/lazygit.tar.gz lazygit; \
     mv /tmp/lazygit /usr/local/bin/lazygit; \
     rm /tmp/lazygit.tar.gz; \
@@ -48,10 +59,8 @@ RUN set -eux; \
 
 # Install delta (better git diffs)
 RUN set -eux; \
-    DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
     curl -Lo /tmp/delta.deb \
-        "https://github.com/dandavison/delta/releases/latest/download/git-delta_${DELTA_VERSION}_amd64.deb"; \
+        "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb"; \
     dpkg -i /tmp/delta.deb; \
     rm /tmp/delta.deb; \
     delta --version
@@ -64,14 +73,13 @@ RUN git config --system core.pager delta && \
     git config --system merge.conflictStyle diff3 && \
     git config --system diff.colorMoved default
 
-# Install ripgrep (latest)
+# Install ripgrep
 RUN set -eux; \
-    RG_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
-    [ -z "$RG_VERSION" ] && { echo "ERROR: could not resolve ripgrep version"; exit 1; }; \
-    curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/ripgrep_${RG_VERSION}-1_amd64.deb"; \
-    dpkg -i "ripgrep_${RG_VERSION}-1_amd64.deb"; \
-    rm "ripgrep_${RG_VERSION}-1_amd64.deb"
+    curl -Lo /tmp/ripgrep.deb \
+        "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep_${RIPGREP_VERSION}-1_amd64.deb"; \
+    dpkg -i /tmp/ripgrep.deb; \
+    rm /tmp/ripgrep.deb; \
+    rg --version
 
 # Install eza (modern ls replacement)
 RUN mkdir -p /etc/apt/keyrings && \
@@ -92,10 +100,18 @@ RUN wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | \
     rm -rf /var/lib/apt/lists/* && \
     rm /etc/apt/sources.list.d/qsv.list
 
+# Install yazi (terminal file manager)
+RUN set -eux; \
+    curl -Lo /tmp/yazi.deb \
+        "https://github.com/sxyazi/yazi/releases/download/v${YAZI_VERSION}/yazi-x86_64-unknown-linux-gnu.deb"; \
+    dpkg -i /tmp/yazi.deb; \
+    rm /tmp/yazi.deb; \
+    yazi --version
+
 # Install csvlens (interactive CSV viewer)
 RUN set -eux; \
     curl -Lo /tmp/csvlens.tar.xz \
-        "https://github.com/YS-L/csvlens/releases/latest/download/csvlens-x86_64-unknown-linux-gnu.tar.xz"; \
+        "https://github.com/YS-L/csvlens/releases/download/v${CSVLENS_VERSION}/csvlens-x86_64-unknown-linux-gnu.tar.xz"; \
     tar -C /tmp -xJf /tmp/csvlens.tar.xz; \
     CSVLENS_BIN=$(find /tmp -maxdepth 2 -name 'csvlens' -type f | head -n1); \
     [ -z "$CSVLENS_BIN" ] && { echo "ERROR: csvlens binary not found after extraction"; exit 1; }; \
@@ -107,7 +123,7 @@ RUN set -eux; \
 # Install tealdeer (fast tldr client)
 RUN set -eux; \
     curl -fLo /usr/local/bin/tldr \
-        "https://github.com/dbrgn/tealdeer/releases/latest/download/tealdeer-linux-x86_64-musl"; \
+        "https://github.com/dbrgn/tealdeer/releases/download/v${TEALDEER_VERSION}/tealdeer-linux-x86_64-musl"; \
     chmod +x /usr/local/bin/tldr; \
     tldr --version
 
@@ -119,24 +135,13 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     TZ=Europe/Amsterdam
 
-# Install latest Neovim
+# Install Neovim
 RUN set -eux; \
-    LATEST_VERSION=$(curl -s https://api.github.com/repos/neovim/neovim/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
-    NVIM_TARBALL_X64="nvim-linux-x86_64.tar.gz"; \
-    NVIM_TARBALL_64="nvim-linux64.tar.gz"; \
-    NVIM_URL_X64="https://github.com/neovim/neovim/releases/download/${LATEST_VERSION}/${NVIM_TARBALL_X64}"; \
-    NVIM_URL_64="https://github.com/neovim/neovim/releases/download/${LATEST_VERSION}/${NVIM_TARBALL_64}"; \
-    cd /tmp; \
-    (curl -L --retry 3 --fail -O "$NVIM_URL_X64" || curl -L --retry 3 --fail -O "$NVIM_URL_64"); \
-    if [ -f nvim-linux-x86_64.tar.gz ]; then \
-        tar -C /usr -xzf nvim-linux-x86_64.tar.gz; \
-        ln -sf /usr/nvim-linux-x86_64/bin/nvim /usr/bin/nvim; \
-        rm nvim-linux-x86_64.tar.gz; \
-    elif [ -f nvim-linux64.tar.gz ]; then \
-        tar -C /usr -xzf nvim-linux64.tar.gz; \
-        ln -sf /usr/nvim-linux64/bin/nvim /usr/bin/nvim; \
-        rm nvim-linux64.tar.gz; \
-    fi; \
+    curl -L --retry 3 --fail -o /tmp/nvim.tar.gz \
+        "https://github.com/neovim/neovim/releases/download/v${NEOVIM_VERSION}/nvim-linux-x86_64.tar.gz"; \
+    tar -C /usr -xzf /tmp/nvim.tar.gz; \
+    ln -sf /usr/nvim-linux-x86_64/bin/nvim /usr/bin/nvim; \
+    rm /tmp/nvim.tar.gz; \
     nvim --version | head -n1
 
 # Create non-root dev user
@@ -183,12 +188,9 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 # Install gh-dash as a gh extension
 RUN set -eux; \
     GH_DASH_DIR="$HOME/.local/share/gh/extensions/gh-dash"; \
-    GH_DASH_TAG=$(curl -s https://api.github.com/repos/dlvhdr/gh-dash/releases/latest \
-        | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'); \
-    [ -z "$GH_DASH_TAG" ] && { echo "ERROR: could not resolve gh-dash version"; exit 1; }; \
     mkdir -p "$GH_DASH_DIR"; \
     curl -fLo "$GH_DASH_DIR/gh-dash" \
-        "https://github.com/dlvhdr/gh-dash/releases/download/${GH_DASH_TAG}/gh-dash_${GH_DASH_TAG}_linux-amd64"; \
+        "https://github.com/dlvhdr/gh-dash/releases/download/v${GH_DASH_VERSION}/gh-dash_v${GH_DASH_VERSION}_linux-amd64"; \
     chmod +x "$GH_DASH_DIR/gh-dash"
 
 # Install uv
@@ -206,4 +208,3 @@ RUN tldr --update && echo "tealdeer cache updated" || echo "WARNING: tealdeer ca
 
 # Default command
 CMD ["bash"]
-
