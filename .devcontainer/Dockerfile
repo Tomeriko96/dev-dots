@@ -35,7 +35,8 @@ RUN apt-get update && \
         wget \
         gnupg \
         openssh-client \
-        unzip && \
+        unzip \
+        ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js LTS (for npm/Slidev and other Node-based tools)
