@@ -6,7 +6,7 @@ echo "👤 Running as: $(id)"
 
 # Verify key CLIs are available (all installed via Dockerfile)
 echo "✅ CLIs available:"
-for cli in nvim opencode claude uv starship zoxide node npm csvlens; do
+for cli in nvim opencode claude uv starship zoxide node npm csvlens micromamba az azcopy azd; do
   which "$cli" 2>/dev/null && echo "  ✅ $cli: $(which $cli)" || echo "  ⚠️  $cli: missing"
 done
 
@@ -72,6 +72,7 @@ echo "📋 Collecting tool versions → $TOOL_VERSIONS_FILE"
 echo "  ✅ Written to $TOOL_VERSIONS_FILE"
 
 echo ""
+echo "💡 Tip: Run 'az login' to authenticate with Azure (enables az, azcopy, azd)"
 echo "💡 Tip: Run 'gh auth login' to authenticate with GitHub (enables gh and gh-dash)"
 echo "💡 Tip: Run 'lazygit' to open the lazygit TUI"
 echo "💡 Tip: Run 'gh dash' to open the GitHub dashboard TUI (after gh auth login)"

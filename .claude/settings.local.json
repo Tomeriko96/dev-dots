@@ -5,7 +5,6 @@
   },
   "permissions": {
     "allow": [
-      "*",
       "Bash(gh repo:*)",
       "Bash(git clone:*)",
       "Bash(chmod:*)",
@@ -16,7 +15,9 @@
       "Bash(grep -v '\\\\.png$\\\\|\\\\.jpg$\\\\|\\\\.jpeg$\\\\|\\\\.gif$\\\\|\\\\.ico$\\\\|\\\\.svg$\\\\|\\\\.webp$')",
       "Bash(gh api *)",
       "Bash(xargs -I{} gh api repos/tomeriko96/dev-dots/commits/{} --jq '.commit.message')",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(gh auth *)"
     ]
   }
 }

@@ -15,6 +15,9 @@ ARG ONEFETCH_VERSION="2.22.0"
 ARG STARSHIP_VERSION="1.24.2"
 ARG UV_VERSION="0.11.1"
 ARG ZOXIDE_VERSION="0.9.9"
+ARG MICROMAMBA_VERSION="2.8.1-0"
+ARG AZCOPY_VERSION="10.26.0"
+ARG AZD_VERSION="1.9.5"
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Install all system dependencies first (including gnupg for qsv)
@@ -145,6 +148,39 @@ RUN set -eux; \
     chmod +x /usr/local/bin/tldr; \
     tldr --version
 
+# Install Azure CLI
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
+    gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ bookworm main" \
+        > /etc/apt/sources.list.d/azure-cli.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends azure-cli && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /etc/apt/sources.list.d/azure-cli.list && \
+    az --version | head -n1
+
+# Install azcopy (high-performance Azure Storage data transfer)
+RUN set -eux; \
+    curl -Lo /tmp/azcopy.tar.gz \
+        "https://github.com/Azure/azure-storage-azcopy/releases/download/v${AZCOPY_VERSION}/azcopy_linux_amd64_${AZCOPY_VERSION}.tar.gz"; \
+    tar -C /tmp -xzf /tmp/azcopy.tar.gz; \
+    AZCOPY_BIN=$(find /tmp -maxdepth 2 -name 'azcopy' -type f | head -n1); \
+    [ -z "$AZCOPY_BIN" ] && { echo "ERROR: azcopy binary not found after extraction"; exit 1; }; \
+    mv "$AZCOPY_BIN" /usr/local/bin/azcopy; \
+    chmod +x /usr/local/bin/azcopy; \
+    rm -rf /tmp/azcopy.tar.gz /tmp/azcopy_linux_amd64*; \
+    azcopy --version
+
+# Install Azure Developer CLI (azd)
+RUN set -eux; \
+    curl -fsSL -o /tmp/azd.deb \
+        "https://github.com/Azure/azure-dev/releases/download/azure-dev-cli_${AZD_VERSION}/azd_${AZD_VERSION}_amd64.deb" && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/azd.deb && \
+    rm -f /tmp/azd.deb && \
+    rm -rf /var/lib/apt/lists/* && \
+    azd version
+
 # Configure locale
 RUN sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && \
     locale-gen
@@ -171,6 +207,13 @@ RUN apt-get update && \
         libxrandr2 libgbm1 libpango-1.0-0 libcairo2 \
         libasound2 libx11-6 libxext6 && \
     rm -rf /var/lib/apt/lists/*
+
+# Install micromamba (static binary; conda-compatible environment manager)
+RUN set -eux; \
+    curl -fLo /usr/local/bin/micromamba \
+        "https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-linux-64"; \
+    chmod +x /usr/local/bin/micromamba; \
+    micromamba --version
 
 # Create non-root dev user
 ARG USERNAME=dev
@@ -214,6 +257,11 @@ ENV CLAUDE_CODE_USE_FOUNDRY=1 \
     ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 \
     ANTHROPIC_DEFAULT_SONNET_MODEL=claude-sonnet-4-6 \
     ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-6
+
+ENV MAMBA_ROOT_PREFIX="/home/${USERNAME}/micromamba"
+
+# Wire micromamba shell hook into ~/.bashrc (appends eval block)
+RUN micromamba shell init --shell bash --root-prefix ~/micromamba
 
 # Install OpenCode CLI (unpinned: install script does not expose a version flag)
 RUN curl -fsSL https://opencode.ai/install | bash
