@@ -1,2 +1,5 @@
 # Generated at devcontainer post-create time; ignored so it is never committed
 tool-versions.txt
+
+# Claude Code local settings (machine-specific, not shared)
+.claude/settings.local.json
