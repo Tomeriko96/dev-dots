@@ -244,6 +244,8 @@ COPY --chown=${USERNAME}:${USERNAME} .devcontainer/tmux-dev-layouts.sh /home/${U
 RUN chmod +x /home/${USERNAME}/.tmux-dev-layouts.sh
 COPY --chown=${USERNAME}:${USERNAME} .devcontainer/onboard.sh /home/${USERNAME}/.onboard.sh
 RUN chmod +x /home/${USERNAME}/.onboard.sh
+COPY --chown=${USERNAME}:${USERNAME} .devcontainer/hooks/ /home/${USERNAME}/.claude/hooks/
+RUN chmod +x /home/${USERNAME}/.claude/hooks/*.sh
 
 WORKDIR /workspace
 USER ${USERNAME}

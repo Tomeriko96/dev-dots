@@ -84,5 +84,68 @@ echo ""
 echo "🧭 Run 'onboard' to launch the interactive post-build checklist wizard"
 echo "   (gh auth login + opencode auth + claude-setup in one guided flow)"
 
+# ── Claude Code container-wide settings ──────────────────────────────────────
+echo ""
+echo "🤖 Configuring Claude Code container-wide settings..."
+
+CLAUDE_DIR="$HOME/.claude"
+CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
+CLAUDE_HOOKS_DIR="$CLAUDE_DIR/hooks"
+REPO_HOOKS_DIR="/workspaces/dev-dots/.devcontainer/hooks"
+
+mkdir -p "$CLAUDE_HOOKS_DIR"
+
+# Install hook scripts
+if [ -d "$REPO_HOOKS_DIR" ]; then
+  cp "$REPO_HOOKS_DIR"/*.sh "$CLAUDE_HOOKS_DIR/" 2>/dev/null && \
+    chmod +x "$CLAUDE_HOOKS_DIR"/*.sh
+  echo "  ✅ Hooks installed to $CLAUDE_HOOKS_DIR"
+fi
+
+# Container-wide settings to merge (hook + common permissions)
+CONTAINER_SETTINGS=$(cat <<'JSONEOF'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Bash",
+        "command": "~/.claude/hooks/block-env-read.sh"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(gh repo:*)",
+      "Bash(git clone:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git log *)",
+      "Bash(gh api *)",
+      "Bash(gh auth *)",
+      "Skill(update-config)"
+    ]
+  }
+}
+JSONEOF
+)
+
+# Merge into existing settings (preserves user preferences like model/theme)
+if [ -f "$CLAUDE_SETTINGS" ]; then
+  MERGED=$(jq -n --argjson existing "$(cat "$CLAUDE_SETTINGS")" --argjson new "$CONTAINER_SETTINGS" '
+    $existing + {
+      hooks: (($existing.hooks // {}) + $new.hooks),
+      permissions: {
+        allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique)
+      }
+    }
+  ')
+  echo "$MERGED" > "$CLAUDE_SETTINGS"
+else
+  echo "$CONTAINER_SETTINGS" > "$CLAUDE_SETTINGS"
+fi
+echo "  ✅ Container-wide settings merged into $CLAUDE_SETTINGS"
+
+echo ""
 echo "✅ Post-create complete. Run 'nvim .' or 'tdl opencode' to get started."
 
