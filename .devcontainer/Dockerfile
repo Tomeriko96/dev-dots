@@ -130,7 +130,8 @@ RUN set -eux; \
 # ==============================================================================
 
 RUN set -eux; \
-    git config --system init.defaultBranch main
+    git config --system init.defaultBranch main; \
+    git config --system credential.helper gh
 
 # ==============================================================================
 # lazygit
