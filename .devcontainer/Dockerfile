@@ -131,7 +131,8 @@ RUN set -eux; \
 
 RUN set -eux; \
     git config --system init.defaultBranch main; \
-    git config --system credential.helper gh
+    git config --system credential.https://github.com.helper gh; \
+    git config --system credential.helper glab
 
 # ==============================================================================
 # lazygit
