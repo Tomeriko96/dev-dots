@@ -2,12 +2,12 @@
 # =============================================================================
 # onboard.sh — Post-build onboarding wizard
 # =============================================================================
-# Guides you through the three authentication/setup steps needed after each
-# fresh container build:
+# Guides you through the three authentication steps needed after each fresh
+# container build:
 #
-#   1. gh auth login       – primary GitHub account (git + gh CLI)
-#   2. opencode auth login – secondary GitHub account (GitHub Copilot in OpenCode)
-#   3. claude-setup        – Anthropic Foundry API key & resource name
+#   1. gh auth login       — GitHub CLI authentication
+#   2. opencode auth login — GitHub Copilot in OpenCode
+#   3. claude auth login   — Claude Code CLI authentication
 #
 # Run via the shell function:  onboard
 # Or directly:                 bash ~/.onboard.sh
@@ -36,26 +36,20 @@ _yellow() { printf "${YELLOW}%s${RESET}" "$*"; }
 _cyan()   { printf "${CYAN}%s${RESET}"   "$*"; }
 
 # ── status helpers ────────────────────────────────────────────────────────────
-_done()    { echo -e "  ${GREEN}✔${RESET}  $*"; }
-_pending() { echo -e "  ${YELLOW}◌${RESET}  $*"; }
-_skip()    { echo -e "  ${DIM}–${RESET}  $* ${DIM}(skipped)${RESET}"; }
-_info()    { echo -e "  ${CYAN}ℹ${RESET}  $*"; }
-_error()   { echo -e "  ${RED}✖${RESET}  $*" >&2; }
-_section() { echo -e "\n${BOLD}${CYAN}▶ $*${RESET}"; }
+_done()    { echo "[OK]     $*"; }
+_pending() { echo "[PENDING] $*"; }
+_skip()    { echo "[SKIPPED] $*"; }
+_info()    { echo "[INFO]   $*"; }
+_error()   { echo "[ERROR]  $*" >&2; }
+_section() { echo ""; echo "================================================================================"
+             echo "$*"
+             echo "================================================================================"; }
 
 # ── check helpers ─────────────────────────────────────────────────────────────
 
 # Returns 0 if gh is authenticated (any account), non-zero otherwise
 _gh_authed() {
   gh auth status &>/dev/null
-}
-
-# Returns 0 if the Claude secrets file has non-empty key and resource values
-_claude_configured() {
-  local secrets="$HOME/.claude/secrets.sh"
-  [[ -f "$secrets" ]] \
-    && grep -qE 'ANTHROPIC_FOUNDRY_API_KEY="[^"]+"' "$secrets" \
-    && grep -qE 'ANTHROPIC_FOUNDRY_RESOURCE="[^"]+"' "$secrets"
 }
 
 # Returns 0 if opencode appears to have auth credentials stored
@@ -94,10 +88,10 @@ _ask_yn() {
 # ── step runners ──────────────────────────────────────────────────────────────
 
 run_gh_auth() {
-  _section "Step 1 / 3 — GitHub CLI authentication (primary account)"
+  _section "Step 1 / 3 — GitHub CLI authentication"
   echo ""
-  _info "This authenticates $(_bold 'gh') and $(_bold 'git') with your primary GitHub account."
-  _info "You will be prompted to choose a protocol (HTTPS/SSH) and login method."
+  _info "This authenticates gh CLI with your GitHub account."
+  _info "You will be prompted to choose a protocol (HTTPS) and login method."
   echo ""
 
   if _gh_authed; then
@@ -123,10 +117,10 @@ run_gh_auth() {
 }
 
 run_opencode_auth() {
-  _section "Step 2 / 3 — OpenCode × GitHub Copilot (secondary account)"
+  _section "Step 2 / 3 — OpenCode × GitHub Copilot"
   echo ""
-  _info "This connects $(_bold 'opencode') to GitHub Copilot using your secondary GitHub account."
-  _info "OpenCode will open an interactive setup — select $(_bold 'GitHub Copilot') as the provider"
+  _info "This connects opencode to GitHub Copilot."
+  _info "OpenCode will open an interactive setup — select 'GitHub Copilot' as the provider"
   _info "and follow the browser / device-code flow to sign in."
   echo ""
 
@@ -159,88 +153,63 @@ run_opencode_auth() {
   return $rc
 }
 
-run_claude_setup() {
-  _section "Step 3 / 3 — Claude / Anthropic Foundry setup"
+run_claude_auth() {
+  _section "Step 3 / 3 — Claude Code CLI authentication"
   echo ""
-  _info "This sets your $(_bold 'ANTHROPIC_FOUNDRY_API_KEY') and $(_bold 'ANTHROPIC_FOUNDRY_RESOURCE')"
-  _info "in $(_dim '~/.claude/secrets.sh') — they will be sourced into your shell when the wizard exits."
+  _info "This authenticates Claude Code CLI with your Anthropic account."
+  _info "Follow the browser or device-code flow to sign in."
   echo ""
 
-  if _claude_configured; then
-    _done "Claude secrets already configured in ~/.claude/secrets.sh"
-    echo ""
-    if ! _ask_yn "Edit the secrets file again (rotate key / change resource)?"; then
-      _skip "claude-setup"
-      return 0
-    fi
+  if ! command -v claude &>/dev/null; then
+    _error "claude is not installed. Skipping."
+    return 1
   fi
 
-  # claude-setup is a shell function; if this script is sourced it's available,
-  # but if run as a subprocess we fall back to the inline implementation.
-  if declare -f claude-setup &>/dev/null; then
-    echo ""
-    claude-setup
+  echo ""
+  _info "Running: claude auth login"
+  echo ""
+  claude auth login
+  local rc=$?
+  echo ""
+  if [[ $rc -eq 0 ]]; then
+    _done "claude auth login completed successfully."
   else
-    _info "Opening ~/.claude/secrets.sh in nvim…"
-    local secrets="$HOME/.claude/secrets.sh"
-    if [[ ! -f "$secrets" ]]; then
-      mkdir -p "$(dirname -- "$secrets")"
-      cat >"$secrets" <<'TMPL'
-# Claude Foundry secrets — fill these in after container creation
-# Edit this file: use 'claude-setup' or edit directly at ~/.claude/secrets.sh
-export ANTHROPIC_FOUNDRY_API_KEY=""
-export ANTHROPIC_FOUNDRY_RESOURCE=""
-TMPL
-      _info "Created template secrets file: $secrets"
-    fi
-    if command -v nvim &>/dev/null; then
-      nvim "$secrets"
-    else
-      _error "nvim not found. Please edit $secrets manually."
-      return 1
-    fi
-    # Validate syntax before sourcing to avoid partial execution of a bad file
-    if ! bash -n "$secrets" 2>/dev/null; then
-      _error "Syntax error in $secrets. Please fix it and run 'claude-setup' again."
-      return 1
-    fi
-    if source "$secrets"; then
-      _done "Claude secrets saved. They will be loaded into your shell when the wizard exits."
-    else
-      _error "Failed to source $secrets. Please check the file for syntax errors."
-      return 1
-    fi
+    _error "claude auth login exited with code $rc."
+    _info "You can retry later with: claude auth login"
   fi
+  return $rc
 }
 
 # ── summary ───────────────────────────────────────────────────────────────────
 
+_claude_authed() {
+  claude auth status &>/dev/null
+}
+
 print_summary() {
   echo ""
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-  echo -e "${BOLD}  Onboarding summary${RESET}"
-  echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+  echo "================================================================================"
+  echo "ONBOARDING SUMMARY"
+  echo "================================================================================"
   echo ""
 
   if _gh_authed; then
-    _done "gh / git  — authenticated"
+    _done "gh / git authenticated"
   else
-    _pending "gh / git  — $(_bold 'not authenticated')  →  run: $(_yellow 'gh auth login')"
+    _pending "gh / git not authenticated — run: gh auth login"
   fi
 
   if _opencode_authed; then
-    _done "opencode  — Copilot provider configured"
+    _done "opencode Copilot provider configured"
   else
-    _pending "opencode  — $(_bold 'not configured')  →  run: $(_yellow 'opencode auth login')"
+    _pending "opencode not configured — run: opencode auth login"
   fi
 
-  if _claude_configured; then
-    _done "claude    — Foundry secrets configured"
+  if _claude_authed; then
+    _done "claude Code CLI authenticated"
   else
-    _pending "claude    — $(_bold 'not configured')  →  run: $(_yellow 'claude-setup')"
+    _pending "claude not authenticated — run: claude auth login"
   fi
-
-  echo ""
 }
 
 # ── main ──────────────────────────────────────────────────────────────────────
@@ -248,19 +217,19 @@ print_summary() {
 main() {
   clear
   echo ""
-  echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════╗${RESET}"
-  echo -e "${BOLD}${CYAN}║       dev-dots — post-build onboarding       ║${RESET}"
-  echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════╝${RESET}"
+  echo "================================================================================"
+  echo "DEV-DOTS ONBOARDING WIZARD"
+  echo "================================================================================"
   echo ""
-  echo -e "  Welcome! This wizard walks you through the three auth/setup"
-  echo -e "  steps needed after each fresh container build."
+  echo "Welcome! This wizard walks you through the three authentication steps"
+  echo "needed after each fresh container build."
   echo ""
 
   # Quick pre-flight status
-  echo -e "${BOLD}  Current status:${RESET}"
+  echo "Current status:"
   if _gh_authed;       then _done "gh auth login";   else _pending "gh auth login"; fi
   if _opencode_authed; then _done "opencode auth login"; else _pending "opencode auth login"; fi
-  if _claude_configured; then _done "claude-setup";  else _pending "claude-setup"; fi
+  if _claude_authed;   then _done "claude auth login"; else _pending "claude auth login"; fi
   echo ""
 
   if _ask_yn "Run the wizard now?"; then
@@ -273,14 +242,15 @@ main() {
     run_opencode_auth || true
 
     # Step 3
-    run_claude_setup || true
+    run_claude_auth || true
 
     print_summary
-    echo -e "  All done! Run ${BOLD}onboard${RESET} at any time to re-run individual steps."
+    echo ""
+    echo "All done! Run 'onboard' at any time to re-run individual steps."
     echo ""
   else
     echo ""
-    echo -e "  Skipped. Run ${BOLD}onboard${RESET} at any time to start the wizard."
+    echo "Skipped. Run 'onboard' at any time to start the wizard."
     echo ""
   fi
 }

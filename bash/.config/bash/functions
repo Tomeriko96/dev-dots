@@ -1,63 +1,14 @@
-
 # =====================
 # Onboarding Wizard
 # =====================
 onboard() {
-  # Source the wizard script so that inner calls to claude-setup (a shell
-  # function defined in this file) work correctly inside the subprocess.
+  # Run the wizard script to set up authentication and configuration.
   local script="$HOME/.onboard.sh"
   if [[ ! -f "$script" ]]; then
     echo "[onboard] Wizard script not found at $script" >&2
     return 1
   fi
-  # Export claude-setup into the bash subprocess so that onboard.sh can detect
-  # and call it via 'declare -f claude-setup', falling back to its own inline
-  # implementation when the export is unavailable (e.g. older bash versions).
-  export -f claude-setup 2>/dev/null || true
-  bash "$script"
-  # The wizard runs in a subprocess and cannot export env vars back to us.
-  # Re-source the Claude secrets file here in the parent shell so that
-  # ANTHROPIC_FOUNDRY_API_KEY and ANTHROPIC_FOUNDRY_RESOURCE are available
-  # in the current interactive session after the wizard finishes.
-  local secrets="$HOME/.claude/secrets.sh"
-  if [[ -f "$secrets" ]] && bash -n "$secrets" 2>/dev/null; then
-    source "$secrets"
-  fi
-}
-
-# =====================
-# Claude Setup
-# =====================
-claude-setup() {
-  local secrets="$HOME/.claude/secrets.sh"
-
-  # Ensure the secrets file exists
-  if [ ! -f "$secrets" ]; then
-    mkdir -p "$(dirname -- "$secrets")"
-    cat > "$secrets" <<'EOF'
-# Claude Foundry secrets 4 fill these in after container creation
-# Edit this file: Use 'claude-setup' or edit directly at ~/.claude/secrets.sh
-export ANTHROPIC_FOUNDRY_API_KEY=""
-export ANTHROPIC_FOUNDRY_RESOURCE=""
-EOF
-    echo "[claude-setup] Created template secrets file: $secrets"
-  fi
-
-
-  # Always use nvim for editing
-  if ! command -v nvim >/dev/null 2>&1; then
-    echo "[claude-setup] Error: nvim (Neovim) is not installed. Please install it to proceed." >&2
-    return 1
-  fi
-  nvim "$secrets"
-
-  # Source the secrets file
-  if source "$secrets"; then
-    echo "Claude secrets loaded."
-  else
-    echo "[claude-setup] Error: Failed to source secrets from $secrets. Please check syntax or permissions." >&2
-    return 2
-  fi
+  bash "$script" "$@"
 }
 
 # =====================
@@ -75,57 +26,6 @@ csvlens() {
     [ -n "$file" ] && command csvlens "$file"
   else
     command csvlens "$@"
-  fi
-}
-# Usage: csvlens (fuzzy-pick CSV), csvlens file.csv (direct open)
-
-# =====================
-# APT & Package Management
-# =====================
-apt-fzf() {
-  if ! command -v fzf >/dev/null; then
-    echo "fzf is not installed. Please install it first."
-    return 1
-  fi
-  if ! command -v apt-cache >/dev/null; then
-    echo "apt-cache is not available. This function requires apt."
-    return 1
-  fi
-  local pkg
-  # Get list of installed packages
-  local installed_pkgs
-  installed_pkgs=$(apt list --installed 2>/dev/null | awk -F/ 'NR>1{print $1}')
-  # Mark installed packages with an asterisk
-  pkg=$(apt-cache search . | awk '{print $1}' | sort | uniq | awk -v pkgs="$installed_pkgs" 'BEGIN{split(pkgs,arr,"\n");for(i in arr)inst[arr[i]]=1} {if(inst[$1]) print "* "$1; else print "  "$1}' | \
-    fzf --prompt="APT package> " --ansi \
-      --preview 'p=$(echo {} | sed "s/^\* //;s/^  //"); apt-cache show "$p" 2>/dev/null | (command -v batcat >/dev/null && batcat --language=ini --style=plain --color=always || cat)' \
-      --preview-window=right:60%:wrap | sed 's/^\* //;s/^  //')
-  if [ -n "$pkg" ]; then
-    sudo apt install "$pkg"
-  fi
-}
-
-apt-fzf-purge() {
-  if ! command -v fzf >/dev/null; then
-    echo "fzf is not installed. Please install it first."
-    return 1
-  fi
-  if ! command -v apt >/dev/null; then
-    echo "apt is not available. This function requires apt."
-    return 1
-  fi
-  local pkg
-  pkg=$(apt list --installed 2>/dev/null | awk -F/ 'NR>1{print $1}' | sort | uniq | \
-    awk '{print "  "$1}' | \
-    fzf --prompt="Purge installed APT package> " --ansi \
-      --preview 'p=$(echo {} | sed "s/^\* //;s/^  //"); apt-cache show "$p" 2>/dev/null | (command -v batcat >/dev/null && batcat --language=ini --style=plain --color=always || cat)' \
-      --preview-window=right:60%:wrap)
-  pkg=$(echo "$pkg" | sed 's/^\* //;s/^  //')
-  if [ -n "$pkg" ]; then
-    sudo apt purge "$pkg"
-    sudo apt autoclean
-    sudo apt autoremove
-    sudo apt autopurge
   fi
 }
 

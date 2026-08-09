@@ -126,11 +126,5 @@ eval "$(starship init bash)"
 # uv shell completion
 eval "$(uv generate-shell-completion bash)"
 
-# Tmux dev layout helpers (tdl / tdlm / tsl)
-[[ -f "$HOME/.tmux-dev-layouts.sh" ]] && source "$HOME/.tmux-dev-layouts.sh"
-
-# Claude secrets (fill in ~/.claude/secrets.sh post-build)
-[[ -f "$HOME/.claude/secrets.sh" ]] && source "$HOME/.claude/secrets.sh"
-
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"

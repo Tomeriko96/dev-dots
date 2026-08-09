@@ -42,12 +42,12 @@ Defined in `.devcontainer/post-create.sh`:
 
 ### Git Workflow Out of the Box
 
-Host credentials are forwarded into the container via `devcontainer.json` bind mounts (readonly):
+Authentication is handled via CLI tools that work inside the container:
 
-- `~/.gitconfig` → `/home/dev/.gitconfig`
-- `~/.ssh/` → `/home/dev/.ssh/`
+- `gh auth login` — authenticate GitHub CLI (enables `gh` and `glab` operations)
+- `glab auth login` — authenticate GitLab CLI (if needed)
 
-Git operations (`git push`, `git pull`, SSH cloning) work inside the container without any extra setup.
+Once authenticated, git operations work seamlessly via the CLI wrappers (`gh repo clone`, `gh pr create`, etc.) or native git commands.
 
 Available git TUI tools:
 
@@ -67,16 +67,6 @@ From `bash/` and `starship/`:
 - `zoxide`-powered directory jumping
 - Starship prompt with concise git-aware status
 
-### AI + tmux Workflows
-
-The tmux layout helpers are designed for coding with one or more AI assistants in parallel:
-
-- `tdl <ai> [second_ai]`: editor + AI pane(s) + terminal
-- `tdlm <ai> [second_ai]`: one dev window per subdirectory
-- `tsl <pane_count> <command>`: command swarm across panes
-
-These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed in the image and automatically loaded by `.bashrc`.
-
 ## Repository Layout
 
 ```text
@@ -85,8 +75,7 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 │   ├── Dockerfile
 │   ├── devcontainer.json
 │   ├── post-create.sh
-│   ├── tmux.conf
-│   └── tmux-dev-layouts.sh
+│   └── tmux.conf
 ├── bash/
 │   ├── .bashrc
 │   └── .config/bash/
@@ -100,11 +89,11 @@ These commands are sourced from `~/.tmux-dev-layouts.sh`, which is pre-installed
 
 ## Quick Start
 
-1. Open this repository in VS Code.
-2. Run `Dev Containers: Reopen in Container`.
+1. Clone this repository.
+2. Start the devcontainer: `devcontainer-cli open .`
 3. Wait for post-create setup to finish.
-4. Start working with `nvim .`, `tmux`, or your preferred workflow.
-5. *(Optional)* Run `gh auth login` once to enable `gh` and `gh dash` with your GitHub account.
+4. Run `onboard` to authenticate GitHub CLI and Copilot (one-time setup).
+5. Start working with `nvim .`, `vim`, `tmux`, or your preferred workflow.
 
 ## Goal State
 

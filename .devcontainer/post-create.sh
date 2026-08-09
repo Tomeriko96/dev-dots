@@ -1,29 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "🔥 Starting post-create.sh..."
-echo "👤 Running as: $(id)"
+echo ""
+echo "================================================================================"
+echo "POST-CREATE SETUP STARTING"
+echo "================================================================================"
+echo "Running as: $(id)"
+echo ""
 
 # Verify key CLIs are available (all installed via Dockerfile)
-echo "✅ CLIs available:"
-for cli in nvim opencode claude uv starship zoxide node npm csvlens micromamba az azcopy azd; do
-  which "$cli" 2>/dev/null && echo "  ✅ $cli: $(which $cli)" || echo "  ⚠️  $cli: missing"
+echo "================================================================================"
+echo "CLIs AVAILABLE"
+echo "================================================================================"
+for cli in nvim opencode claude uv starship zoxide node npm csvlens micromamba az azcopy azd kubectl helm flux glab aws; do
+  which "$cli" 2>/dev/null && echo "[OK]     $cli: $(which $cli)" || echo "[MISSING] $cli"
 done
 
 # Print git tooling summary
 echo ""
-echo "🛠️  Git tooling available:"
+echo "================================================================================"
+echo "GIT TOOLING AVAILABLE"
+echo "================================================================================"
 for cli in git lazygit gh delta; do
-  which "$cli" >/dev/null 2>&1 && echo "  ✅ $cli: $(which $cli)" || echo "  ❌ $cli: missing"
+  which "$cli" >/dev/null 2>&1 && echo "[OK]     $cli: $(which $cli)" || echo "[MISSING] $cli"
 done
 GH_DASH_BIN="$HOME/.local/share/gh/extensions/gh-dash/gh-dash"
-[[ -x "$GH_DASH_BIN" ]] && echo "  ✅ gh-dash: $GH_DASH_BIN" || echo "  ❌ gh-dash: missing"
+[[ -x "$GH_DASH_BIN" ]] && echo "[OK]     gh-dash: $GH_DASH_BIN" || echo "[MISSING] gh-dash"
 
 # Collect all installed tool versions and write to tool-versions.txt
 # This file is .gitignore'd; useful for debugging when a build has issues.
 TOOL_VERSIONS_FILE="/workspace/tool-versions.txt"
 echo ""
-echo "📋 Collecting tool versions → $TOOL_VERSIONS_FILE"
+echo "================================================================================"
+echo "COLLECTING TOOL VERSIONS"
+echo "================================================================================"
 {
   echo "# Tool versions captured at devcontainer post-create"
   echo "# Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
@@ -69,24 +79,26 @@ echo "📋 Collecting tool versions → $TOOL_VERSIONS_FILE"
   fi
 } > "$TOOL_VERSIONS_FILE"
 
-echo "  ✅ Written to $TOOL_VERSIONS_FILE"
-
+echo "Written to: $TOOL_VERSIONS_FILE"
 echo ""
-echo "💡 Tip: Run 'az login' to authenticate with Azure (enables az, azcopy, azd)"
-echo "💡 Tip: Run 'gh auth login' to authenticate with GitHub (enables gh and gh-dash)"
-echo "💡 Tip: Run 'lazygit' to open the lazygit TUI"
-echo "💡 Tip: Run 'gh dash' to open the GitHub dashboard TUI (after gh auth login)"
-echo "💡 Tip: Run 'tdl opencode' to open a tmux dev layout with OpenCode"
-echo "💡 Tip: Run 'claude-setup' to set your ANTHROPIC_FOUNDRY_API_KEY and ANTHROPIC_FOUNDRY_RESOURCE"
-echo "📺 Tmux layouts: tdl <ai>, tdlm <ai>, tsl <count> <cmd>"
 
+echo "================================================================================"
+echo "TIPS & NEXT STEPS"
+echo "================================================================================"
+echo "Run 'az login' to authenticate with Azure (enables az, azcopy, azd)"
+echo "Run 'lazygit' to open the lazygit TUI"
+echo "Run 'gh dash' to open the GitHub dashboard TUI (after gh auth login)"
 echo ""
-echo "🧭 Run 'onboard' to launch the interactive post-build checklist wizard"
-echo "   (gh auth login + opencode auth + claude-setup in one guided flow)"
+echo "RUN 'onboard' for guided authentication setup"
+echo "  (Step 1: gh auth login)"
+echo "  (Step 2: opencode auth login)"
+echo "  (Step 3: claude auth login)"
 
 # ── Claude Code container-wide settings ──────────────────────────────────────
 echo ""
-echo "🤖 Configuring Claude Code container-wide settings..."
+echo "================================================================================"
+echo "CONFIGURING CLAUDE CODE SETTINGS"
+echo "================================================================================"
 
 CLAUDE_DIR="$HOME/.claude"
 CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
@@ -99,7 +111,7 @@ mkdir -p "$CLAUDE_HOOKS_DIR"
 if [ -d "$REPO_HOOKS_DIR" ]; then
   cp "$REPO_HOOKS_DIR"/*.sh "$CLAUDE_HOOKS_DIR/" 2>/dev/null && \
     chmod +x "$CLAUDE_HOOKS_DIR"/*.sh
-  echo "  ✅ Hooks installed to $CLAUDE_HOOKS_DIR"
+  echo "[OK] Hooks installed to $CLAUDE_HOOKS_DIR"
 fi
 
 # Container-wide settings to merge (hook + common permissions)
@@ -149,8 +161,22 @@ if [ -f "$CLAUDE_SETTINGS" ]; then
 else
   echo "$CONTAINER_SETTINGS" > "$CLAUDE_SETTINGS"
 fi
-echo "  ✅ Container-wide settings merged into $CLAUDE_SETTINGS"
+echo "[OK] Container-wide settings merged into $CLAUDE_SETTINGS"
+
+# ── Load Claude/OpenCode skills ──────────────────────────────────────────────
+echo ""
+echo "================================================================================"
+echo "LOADING CLAUDE SKILLS"
+echo "================================================================================"
+
+npx --yes skills add cedanl/.github --skill '*' -a claude-code -a opencode -a pi -y --copy -g 2>/dev/null && \
+  echo "[OK] Skills loaded from cedanl/.github" || \
+  echo "[SKIPPED] Skills install (npx may not be available yet)"
 
 echo ""
-echo "✅ Post-create complete. Run 'nvim .' or 'tdl opencode' to get started."
+echo "================================================================================"
+echo "POST-CREATE SETUP COMPLETE"
+echo "================================================================================"
+echo "Run 'onboard' to authenticate GitHub CLI and Copilot"
+echo "Run 'nvim .' to start editing"
 

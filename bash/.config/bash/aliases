@@ -11,6 +11,10 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
+# =====================
+# Agents
+# =====================
+alias claude="claude --dangerously-skip-permissions"
 
 # =====================
 # Fuzzy Finder & Previews
