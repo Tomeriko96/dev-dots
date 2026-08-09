@@ -3,12 +3,12 @@ command_timeout = 200
 format = "[$directory]($style)[$git_branch]($style) [$git_status]($style)$character"
 
 [character]
-error_symbol = "[✘](bold red)"
-success_symbol = "[➜](bold green)"
+error_symbol = "[x](bold red)"
+success_symbol = "[>](bold green)"
 
 [directory]
 truncation_length = 3
-truncation_symbol = "…"
+truncation_symbol = "..."
 repo_root_style = "bold magenta"
 repo_root_format = "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) "
 style = "225"
@@ -20,14 +20,14 @@ style = "italic yellow"
 [git_status]
 format     = '[$all_status]($style)'
 style      = "bold red"
-ahead      = "↑${count} "
-diverged   = "⇅${ahead_count}↓${behind_count} "
-behind     = "↓${count} "
-conflicted = "⚔ "
-up_to_date = "✓ "
-untracked  = "◌ "
-modified   = "✎ "
-stashed    = "📦 "
-staged     = "⦿ "
-renamed    = "➜ "
-deleted    = "✖ "
+ahead      = "+${count} "
+diverged   = "+${ahead_count}/-${behind_count} "
+behind     = "-${count} "
+conflicted = "! "
+up_to_date = "= "
+untracked  = "? "
+modified   = "* "
+stashed    = "$ "
+staged     = "+ "
+renamed    = "~ "
+deleted    = "- "
