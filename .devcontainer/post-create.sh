@@ -141,6 +141,10 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
       "Bash(gh api *)",
       "Bash(gh auth *)",
       "Skill(update-config)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)"
     ]
   }
 }
@@ -153,7 +157,8 @@ if [ -f "$CLAUDE_SETTINGS" ]; then
     $existing + {
       hooks: (($existing.hooks // {}) + $new.hooks),
       permissions: {
-        allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique)
+        allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique),
+        deny:  (($existing.permissions.deny  // []) + ($new.permissions.deny  // []) | unique)
       }
     }
   ')
