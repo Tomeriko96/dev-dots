@@ -2,6 +2,10 @@
   "permissions": {
     "allow": [
       "Skill(update-config)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)"
     ]
   }
 }
