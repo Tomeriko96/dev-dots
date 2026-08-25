@@ -12,9 +12,9 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 # =====================
-# Agents
+# Agents (skip permission prompts — safe inside devcontainer)
 # =====================
-alias claude="claude --dangerously-skip-permissions"
+alias opencode="opencode --dangerously-skip-permissions"
 
 # =====================
 # Fuzzy Finder & Previews
