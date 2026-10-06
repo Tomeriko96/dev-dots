@@ -481,6 +481,9 @@ WORKDIR /workspace
 ENV PATH="/home/${USERNAME}/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin"
 ENV FZF_DEFAULT_COMMAND="fdfind --type f"
 ENV MAMBA_ROOT_PREFIX="/home/${USERNAME}/micromamba"
+# uv hardlinkt venvs vanuit ~/.cache/uv: een extra worktree kost dan ~2 MB i.p.v. ~500 MB.
+# (standaard valt uv op overlayfs terug op kopiëren)
+ENV UV_LINK_MODE=hardlink
 
 USER ${USERNAME}
 
