@@ -91,8 +91,9 @@ echo "Run 'gh dash' to open the GitHub dashboard TUI (after gh auth login)"
 echo ""
 echo "RUN 'onboard' for guided authentication setup"
 echo "  (Step 1: gh auth login)"
-echo "  (Step 2: opencode auth login)"
-echo "  (Step 3: claude auth login)"
+echo "  (Step 2: glab auth login --hostname git.ia.surf.nl)"
+echo "  (Step 3: opencode auth login)"
+echo "  (Step 4: claude auth login)"
 
 # ── Claude Code container-wide settings ──────────────────────────────────────
 echo ""

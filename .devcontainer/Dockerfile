@@ -129,10 +129,18 @@ RUN set -eux; \
 # Git configuration
 # ==============================================================================
 
+# Credential helpers per host: gh voor GitHub, glab voor GitLab (SURF + gitlab.com).
+# De '!'-vorm is nodig: een kale 'gh'/'glab' laat git zoeken naar het niet-bestaande
+# git-credential-gh/-glab. Systeemniveau, zodat het een rebuild overleeft zonder
+# 'gh auth setup-git' of handwerk in ~/.gitconfig.
 RUN set -eux; \
     git config --system init.defaultBranch main; \
-    git config --system credential.https://github.com.helper gh; \
-    git config --system credential.helper glab
+    for host in github.com gist.github.com; do \
+      git config --system "credential.https://${host}.helper" '!gh auth git-credential'; \
+    done; \
+    for host in git.ia.surf.nl gitlab.com; do \
+      git config --system "credential.https://${host}.helper" '!glab auth git-credential'; \
+    done
 
 # ==============================================================================
 # lazygit
