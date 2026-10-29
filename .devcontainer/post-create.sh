@@ -104,7 +104,7 @@ echo "==========================================================================
 CLAUDE_DIR="$HOME/.claude"
 CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
 CLAUDE_HOOKS_DIR="$CLAUDE_DIR/hooks"
-REPO_HOOKS_DIR="/workspaces/dev-dots/.devcontainer/hooks"
+REPO_HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hooks"
 
 mkdir -p "$CLAUDE_HOOKS_DIR"
 
@@ -183,6 +183,6 @@ echo ""
 echo "================================================================================"
 echo "POST-CREATE SETUP COMPLETE"
 echo "================================================================================"
-echo "Run 'onboard' to authenticate GitHub CLI and Copilot"
+echo "Run 'onboard' to log in to gh, glab, OpenCode and Claude Code"
 echo "Run 'nvim .' to start editing"
 

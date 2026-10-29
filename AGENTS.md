@@ -63,11 +63,11 @@ cat /workspace/tool-versions.txt
 ```
 
 ### Add a system package
-Edit `Dockerfile` lines 98–120 (apt-get install section)
+Edit the `apt-get install` list in the `Dockerfile` section "Install all APT-managed packages".
 
 ### Add a CLI tool version
-1. Add version pin at top: `Dockerfile` lines 7–31 (ARG section)
-2. Add installation block before line 406 (before "Non-root development user" section)
+1. Add the version pin as an `ARG` in the "Pinned versions" section at the top of the `Dockerfile`
+2. Add the installation block before the "Non-root development user" section
 
 ### Customize bash
 - **Functions:** `bash/.config/bash/functions`
