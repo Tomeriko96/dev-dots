@@ -10,7 +10,7 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 
 - Reproducible CLI toolchain
 - Excellent shell UX out of the box
-- AI-assisted tmux layouts for rapid coding sessions
+- Claude Code and OpenCode preinstalled, with tmux preconfigured (mouse, vi copy-mode, OSC 52 clipboard)
 - Minimal host setup required
 
 ## What You Get Today
@@ -21,13 +21,15 @@ Defined in `.devcontainer/Dockerfile`:
 
 - Debian bookworm-slim base image
 - Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd-find`, `bat`, `openssh-client`, `build-essential`
-- Data and search utilities: `ripgrep`, `qsv`, `fzf`
+- Data and search utilities: `ripgrep`, `fzf`, `csvlens`, `tokei`, `onefetch`
 - Modern shell utilities: `eza` (ls replacement)
 - Node.js LTS (for npm and Node-based tools)
-- Latest Neovim install
+- Neovim (pinned version)
 - Non-root `dev` user and workspace-ready permissions
-- CLI installs for `opencode`, `uv`, `starship`, and `zoxide`
-- Dotfiles pre-loaded: `.bashrc`, bash helpers, starship config, tmux config, tmux layout scripts
+- CLI installs for `claude` (Claude Code), `opencode`, `uv`, `micromamba`, `starship`, and `zoxide`
+- DevOps and cloud CLIs: `kubectl`, `helm`, `flux`, `sops`, `glab`, `aws`, `az`, `azcopy`, `azd`
+- Media and browser automation: `ffmpeg` and the Playwright Chromium runtime libraries
+- Dotfiles pre-loaded: `.bashrc`, bash helpers, starship config, tmux config, `onboard` wizard
 - LazyVim starter pre-cloned to `~/.config/nvim` (plugins download on first `nvim` launch)
 - **Git tooling**: `lazygit` (TUI git client), `gh` (GitHub CLI), `delta` (syntax-highlighted diffs), `gh-dash` (GitHub dashboard TUI)
 - System-level git pager configured to use `delta` (user `~/.gitconfig` takes precedence)
@@ -36,18 +38,25 @@ Defined in `.devcontainer/Dockerfile`:
 
 Defined in `.devcontainer/post-create.sh`:
 
-- CLI availability verification (nvim, opencode, uv, starship, zoxide, node, npm, csvlens)
+- CLI availability verification (nvim, opencode, claude, uv, starship, zoxide, node, npm, csvlens, micromamba, az, azcopy, azd, kubectl, helm, flux, glab, aws)
 - Git tooling availability summary on startup
-- Helpful tips printed on startup (lazygit, gh auth login, gh dash, tdl opencode)
+- Helpful tips printed on startup (az login, lazygit, gh dash, onboard)
+- Tool versions written to `/workspace/tool-versions.txt`
+- Claude Code hooks and container-wide settings merged into `~/.claude/settings.json`
+- Claude/OpenCode skills from `cedanl/.github` installed
+
+`.devcontainer/cleanup-tmp.sh` runs on every container start (`postStartCommand`). It clears old Claude scratchpads, leftover `.so` files and the uv cache in `/tmp`, which sits on the container overlay and otherwise grows without limit.
 
 ### Git Workflow Out of the Box
 
-Authentication is handled via CLI tools that work inside the container:
+Run `onboard` for a guided login. It walks through the CLIs below:
 
-- `gh auth login` — authenticate GitHub CLI (enables `gh` and `glab` operations)
-- `glab auth login` — authenticate GitLab CLI (if needed)
+- `gh auth login` — GitHub CLI, and git over HTTPS for github.com
+- `glab auth login --hostname git.ia.surf.nl` — GitLab CLI, and git over HTTPS for the SURF GitLab
+- `opencode auth login` — GitHub Copilot in OpenCode
+- `claude auth login` — Claude Code
 
-Once authenticated, git operations work seamlessly via the CLI wrappers (`gh repo clone`, `gh pr create`, etc.) or native git commands.
+Git credential helpers are configured per host at system level in the Dockerfile (`gh` for github.com, `glab` for git.ia.surf.nl and gitlab.com), so plain `git clone/pull/push` over HTTPS works once `gh` and `glab` are logged in. No `gh auth setup-git` or SSH keys needed.
 
 Available git TUI tools:
 
@@ -71,9 +80,15 @@ From `bash/` and `starship/`:
 
 ```text
 .
+├── .claude/
+│   └── settings.json
 ├── .devcontainer/
 │   ├── Dockerfile
+│   ├── cleanup-tmp.sh
 │   ├── devcontainer.json
+│   ├── hooks/
+│   │   └── block-env-read.sh
+│   ├── onboard.sh
 │   ├── post-create.sh
 │   └── tmux.conf
 ├── bash/
@@ -84,15 +99,19 @@ From `bash/` and `starship/`:
 │       └── rc
 ├── starship/
 │   └── .config/starship.toml
+├── AGENTS.md
+├── CLAUDE.md
 └── README.md
 ```
+
+`AGENTS.md` holds the instructions for AI agents; `CLAUDE.md` only imports it.
 
 ## Quick Start
 
 1. Clone this repository.
 2. Start the devcontainer: `devcontainer-cli open .`
 3. Wait for post-create setup to finish.
-4. Run `onboard` to authenticate GitHub CLI and Copilot (one-time setup).
+4. Run `onboard` to log in to `gh`, `glab`, OpenCode and Claude Code (once per fresh build).
 5. Start working with `nvim .`, `vim`, `tmux`, or your preferred workflow.
 
 ## Goal State
