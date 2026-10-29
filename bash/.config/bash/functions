@@ -1,5 +1,5 @@
 # =====================
-# Claude Code — auto-enable Entire per repo
+# Claude Code - auto-enable Entire per repo
 # =====================
 claude() {
   if git rev-parse --is-inside-work-tree &>/dev/null; then
@@ -11,6 +11,21 @@ claude() {
     fi
   fi
   command claude --dangerously-skip-permissions "$@"
+}
+
+# =====================
+# OpenCode - auto-enable Entire per repo
+# =====================
+opencode() {
+  if git rev-parse --is-inside-work-tree &>/dev/null; then
+    local origin
+    origin=$(git remote get-url origin 2>/dev/null || true)
+    if echo "$origin" | grep -q "cedanl/"; then
+      entire enable -y --agent opencode &>/dev/null || true
+      entire configure --checkpoint-remote github:cedanl/entire-checkpoints &>/dev/null || true
+    fi
+  fi
+  command opencode --dangerously-skip-permissions "$@"
 }
 
 # =====================

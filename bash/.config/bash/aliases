@@ -14,7 +14,7 @@ alias ....='cd ../../..'
 # =====================
 # Agents (skip permission prompts — safe inside devcontainer)
 # =====================
-alias opencode="opencode --dangerously-skip-permissions"
+# opencode handled by function in bash/.config/bash/functions
 
 # =====================
 # Fuzzy Finder & Previews
