@@ -2,12 +2,16 @@
 # =============================================================================
 # onboard.sh — Post-build onboarding wizard
 # =============================================================================
-# Guides you through the three authentication steps needed after each fresh
+# Guides you through the four authentication steps needed after each fresh
 # container build:
 #
-#   1. gh auth login       — GitHub CLI authentication
-#   2. opencode auth login — GitHub Copilot in OpenCode
-#   3. claude auth login   — Claude Code CLI authentication
+#   1. gh auth login       — GitHub CLI + git over HTTPS (github.com)
+#   2. glab auth login     — GitLab CLI + git over HTTPS (git.ia.surf.nl)
+#   3. opencode auth login — GitHub Copilot in OpenCode
+#   4. claude auth login   — Claude Code CLI authentication
+#
+# Git credential helpers per host are set system-wide in the Dockerfile, so
+# git works as soon as gh/glab are logged in — no 'gh auth setup-git' needed.
 #
 # Run via the shell function:  onboard
 # Or directly:                 bash ~/.onboard.sh
@@ -52,6 +56,13 @@ _gh_authed() {
   gh auth status &>/dev/null
 }
 
+GITLAB_HOST="${GITLAB_HOST:-git.ia.surf.nl}"
+
+# Returns 0 if glab is authenticated against $GITLAB_HOST
+_glab_authed() {
+  glab auth status --hostname "$GITLAB_HOST" &>/dev/null
+}
+
 # Returns 0 if opencode appears to have auth credentials stored
 _opencode_authed() {
   # OpenCode stores provider config in ~/.config/opencode/config.json
@@ -88,7 +99,7 @@ _ask_yn() {
 # ── step runners ──────────────────────────────────────────────────────────────
 
 run_gh_auth() {
-  _section "Step 1 / 3 — GitHub CLI authentication"
+  _section "Step 1 / 4 — GitHub CLI authentication"
   echo ""
   _info "This authenticates gh CLI with your GitHub account."
   _info "You will be prompted to choose a protocol (HTTPS) and login method."
@@ -116,8 +127,37 @@ run_gh_auth() {
   return $rc
 }
 
+run_glab_auth() {
+  _section "Step 2 / 4 — GitLab CLI authentication ($GITLAB_HOST)"
+  echo ""
+  _info "This authenticates glab (and git over HTTPS) with $GITLAB_HOST."
+  _info "Create a personal access token with scopes 'api' and 'write_repository'."
+  echo ""
+
+  if _glab_authed; then
+    _done "Already authenticated:"
+    glab auth status --hostname "$GITLAB_HOST" 2>&1 | sed 's/^/        /'
+    echo ""
+    if ! _ask_yn "Re-authenticate (refresh token)?" N; then
+      _skip "glab auth login"
+      return 0
+    fi
+  fi
+
+  echo ""
+  glab auth login --hostname "$GITLAB_HOST" --git-protocol https
+  local rc=$?
+  echo ""
+  if [[ $rc -eq 0 ]]; then
+    _done "glab auth login completed successfully."
+  else
+    _error "glab auth login exited with code $rc. You can retry with: $(_bold "glab auth login --hostname $GITLAB_HOST")"
+  fi
+  return $rc
+}
+
 run_opencode_auth() {
-  _section "Step 2 / 3 — OpenCode × GitHub Copilot"
+  _section "Step 3 / 4 — OpenCode × GitHub Copilot"
   echo ""
   _info "This connects opencode to GitHub Copilot."
   _info "OpenCode will open an interactive setup — select 'GitHub Copilot' as the provider"
@@ -154,7 +194,7 @@ run_opencode_auth() {
 }
 
 run_claude_auth() {
-  _section "Step 3 / 3 — Claude Code CLI authentication"
+  _section "Step 4 / 4 — Claude Code CLI authentication"
   echo ""
   _info "This authenticates Claude Code CLI with your Anthropic account."
   _info "Follow the browser or device-code flow to sign in."
@@ -199,6 +239,12 @@ print_summary() {
     _pending "gh / git not authenticated — run: gh auth login"
   fi
 
+  if _glab_authed; then
+    _done "glab / git authenticated ($GITLAB_HOST)"
+  else
+    _pending "glab / git not authenticated — run: glab auth login --hostname $GITLAB_HOST"
+  fi
+
   if _opencode_authed; then
     _done "opencode Copilot provider configured"
   else
@@ -221,13 +267,14 @@ main() {
   echo "DEV-DOTS ONBOARDING WIZARD"
   echo "================================================================================"
   echo ""
-  echo "Welcome! This wizard walks you through the three authentication steps"
+  echo "Welcome! This wizard walks you through the four authentication steps"
   echo "needed after each fresh container build."
   echo ""
 
   # Quick pre-flight status
   echo "Current status:"
   if _gh_authed;       then _done "gh auth login";   else _pending "gh auth login"; fi
+  if _glab_authed;     then _done "glab auth login"; else _pending "glab auth login"; fi
   if _opencode_authed; then _done "opencode auth login"; else _pending "opencode auth login"; fi
   if _claude_authed;   then _done "claude auth login"; else _pending "claude auth login"; fi
   echo ""
@@ -239,9 +286,12 @@ main() {
     run_gh_auth || true
 
     # Step 2
-    run_opencode_auth || true
+    run_glab_auth || true
 
     # Step 3
+    run_opencode_auth || true
+
+    # Step 4
     run_claude_auth || true
 
     print_summary

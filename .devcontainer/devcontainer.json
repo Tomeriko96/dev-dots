@@ -6,5 +6,6 @@
   },
   "remoteUser": "dev",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "forwardPorts": [8000, 3030]
+  "postStartCommand": "bash .devcontainer/cleanup-tmp.sh",
+  "forwardPorts": [5173, 8000, 3030]
 }
