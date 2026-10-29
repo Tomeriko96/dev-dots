@@ -61,54 +61,6 @@ csvlens() {
 # Usage: csvlens (fuzzy-pick CSV), csvlens file.csv (direct open)
 
 # =====================
-# APT & Package Management
-# =====================
-apt-fzf() {
-  if ! command -v fzf >/dev/null; then
-    echo "fzf is not installed. Please install it first."
-    return 1
-  fi
-  if ! command -v apt-cache >/dev/null; then
-    echo "apt-cache is not available. This function requires apt."
-    return 1
-  fi
-  local pkg
-  local installed_pkgs
-  installed_pkgs=$(apt list --installed 2>/dev/null | awk -F/ 'NR>1{print $1}')
-  pkg=$(apt-cache search . | awk '{print $1}' | sort | uniq | awk -v pkgs="$installed_pkgs" 'BEGIN{split(pkgs,arr,"\n");for(i in arr)inst[arr[i]]=1} {if(inst[$1]) print "* "$1; else print "  "$1}' | \
-    fzf --prompt="APT package> " --ansi \
-      --preview 'p=$(echo {} | sed "s/^\* //;s/^  //"); apt-cache show "$p" 2>/dev/null | (command -v batcat >/dev/null && batcat --language=ini --style=plain --color=always || cat)' \
-      --preview-window=right:60%:wrap | sed 's/^\* //;s/^  //')
-  if [ -n "$pkg" ]; then
-    sudo apt install "$pkg"
-  fi
-}
-
-apt-fzf-purge() {
-  if ! command -v fzf >/dev/null; then
-    echo "fzf is not installed. Please install it first."
-    return 1
-  fi
-  if ! command -v apt >/dev/null; then
-    echo "apt is not available. This function requires apt."
-    return 1
-  fi
-  local pkg
-  pkg=$(apt list --installed 2>/dev/null | awk -F/ 'NR>1{print $1}' | sort | uniq | \
-    awk '{print "  "$1}' | \
-    fzf --prompt="Purge installed APT package> " --ansi \
-      --preview 'p=$(echo {} | sed "s/^\* //;s/^  //"); apt-cache show "$p" 2>/dev/null | (command -v batcat >/dev/null && batcat --language=ini --style=plain --color=always || cat)' \
-      --preview-window=right:60%:wrap)
-  pkg=$(echo "$pkg" | sed 's/^\* //;s/^  //')
-  if [ -n "$pkg" ]; then
-    sudo apt purge "$pkg"
-    sudo apt autoclean
-    sudo apt autoremove
-    sudo apt autopurge
-  fi
-}
-
-# =====================
 # Shell & History Utilities
 # =====================
 zd() {

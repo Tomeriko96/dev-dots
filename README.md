@@ -63,7 +63,7 @@ Available git TUI tools:
 From `bash/` and `starship/`:
 
 - Modular bash config (`aliases`, `functions`, `rc`)
-- Productivity helpers (`fzf` history search, compression helpers, apt helpers)
+- Productivity helpers (`fzf` history search, compression helpers)
 - `zoxide`-powered directory jumping
 - Starship prompt with concise git-aware status
 
