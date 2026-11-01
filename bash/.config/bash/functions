@@ -46,6 +46,49 @@ onboard() {
 # =====================
 compress() { tar -czf "${1%/}.tar.gz" "${1%/}"; }
 
+extract() {
+  if [ -z "$1" ]; then
+    echo "Usage: extract <archive>" >&2
+    return 1
+  fi
+  if [ ! -f "$1" ]; then
+    echo "'$1' is not a file" >&2
+    return 1
+  fi
+  case "$1" in
+    *.tar.gz|*.tgz)   tar -xzf "$1" ;;
+    *.tar.bz2|*.tbz2) tar -xjf "$1" ;;
+    *.tar.xz)         tar -xJf "$1" ;;
+    *.tar)            tar -xf  "$1" ;;
+    *.zip)            unzip    "$1" ;;
+    *.gz)             gunzip   "$1" ;;
+    *.bz2)            bunzip2  "$1" ;;
+    *.xz)             unxz     "$1" ;;
+    *) echo "Cannot extract '$1': unsupported format" >&2; return 1 ;;
+  esac
+}
+# Usage: extract <archive> - auto-detect the format and extract it (counterpart of compress)
+
+# =====================
+# Interactive Content Search
+# =====================
+rgf() {
+  if [ "$#" -eq 0 ]; then
+    echo "Usage: rgf <pattern> [rg options]" >&2
+    return 1
+  fi
+  local result
+  result=$(
+    rg --color=always --line-number --no-heading "$@" 2>/dev/null |
+      fzf --ansi \
+          --delimiter ':' \
+          --preview 'batcat --color=always --style=numbers --highlight-line {2} {1}' \
+          --preview-window 'up,60%,border-bottom,+{2}+3/3,~3'
+  )
+  [ -n "$result" ] && echo "$result"
+}
+# Usage: rgf <pattern> - ripgrep search with a bat preview in fzf; prints the selected file:line:text
+
 # =====================
 # CSV Exploration Helper
 # =====================
