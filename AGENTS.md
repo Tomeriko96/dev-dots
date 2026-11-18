@@ -14,7 +14,7 @@ onboard
 
 This authenticates:
 1. **GitHub CLI** (`gh auth login`) — enables git operations on github.com and `gh` commands
-2. **GitLab CLI** (`glab auth login --hostname git.ia.surf.nl`) — enables git operations on SURF GitLab and `glab` commands
+2. **GitLab CLI** (`glab auth login --hostname git.sdp.surf.nl`) — enables git operations on SURF GitLab and `glab` commands
 3. **OpenCode** (`opencode auth login`) — enables GitHub Copilot in OpenCode
 4. **Claude Code** (`claude auth login`) — enables Claude Code CLI (subscription-based)
 
@@ -75,7 +75,7 @@ Edit the `apt-get install` list in the `Dockerfile` section "Install all APT-man
 
 ## Environment & Credentials
 
-- **Git auth:** HTTPS via credential helpers per host, set system-wide in the `Dockerfile` — `gh` for github.com, `glab` for git.ia.surf.nl and gitlab.com (no SSH keys, no `gh auth setup-git` needed)
+- **Git auth:** HTTPS via credential helpers per host, set system-wide in the `Dockerfile` — `gh` for github.com, `glab` for git.sdp.surf.nl, git.ia.surf.nl (old SURF GitLab, archived, read-only) and gitlab.com (no SSH keys, no `gh auth setup-git` needed)
 - **Claude Code auth:** Handled automatically via browser login; uses subscription, not Azure Foundry
 - **Bash helpers:** Auto-loaded from `bash/.config/bash/`
 - **Claude Code hooks:** Installed to `~/.claude/hooks/` (e.g., blocks reading `.env` files)

@@ -6,7 +6,7 @@
 # container build:
 #
 #   1. gh auth login       — GitHub CLI + git over HTTPS (github.com)
-#   2. glab auth login     — GitLab CLI + git over HTTPS (git.ia.surf.nl)
+#   2. glab auth login     — GitLab CLI + git over HTTPS (git.sdp.surf.nl)
 #   3. opencode auth login — GitHub Copilot in OpenCode
 #   4. claude auth login   — Claude Code CLI authentication
 #
@@ -56,7 +56,7 @@ _gh_authed() {
   gh auth status &>/dev/null
 }
 
-GITLAB_HOST="${GITLAB_HOST:-git.ia.surf.nl}"
+GITLAB_HOST="${GITLAB_HOST:-git.sdp.surf.nl}"
 
 # Returns 0 if glab is authenticated against $GITLAB_HOST
 _glab_authed() {

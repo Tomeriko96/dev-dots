@@ -130,6 +130,8 @@ RUN set -eux; \
 # ==============================================================================
 
 # Credential helpers per host: gh voor GitHub, glab voor GitLab (SURF + gitlab.com).
+# SURF GitLab staat sinds 16-11-2026 op git.sdp.surf.nl; git.ia.surf.nl blijft erbij
+# zolang daar gearchiveerde (alleen-lezen) projecten staan.
 # De '!'-vorm is nodig: een kale 'gh'/'glab' laat git zoeken naar het niet-bestaande
 # git-credential-gh/-glab. Systeemniveau, zodat het een rebuild overleeft zonder
 # 'gh auth setup-git' of handwerk in ~/.gitconfig.
@@ -138,7 +140,7 @@ RUN set -eux; \
     for host in github.com gist.github.com; do \
       git config --system "credential.https://${host}.helper" '!gh auth git-credential'; \
     done; \
-    for host in git.ia.surf.nl gitlab.com; do \
+    for host in git.sdp.surf.nl git.ia.surf.nl gitlab.com; do \
       git config --system "credential.https://${host}.helper" '!glab auth git-credential'; \
     done
 

@@ -52,11 +52,11 @@ Defined in `.devcontainer/post-create.sh`:
 Run `onboard` for a guided login. It walks through the CLIs below:
 
 - `gh auth login` — GitHub CLI, and git over HTTPS for github.com
-- `glab auth login --hostname git.ia.surf.nl` — GitLab CLI, and git over HTTPS for the SURF GitLab
+- `glab auth login --hostname git.sdp.surf.nl` — GitLab CLI, and git over HTTPS for the SURF GitLab
 - `opencode auth login` — GitHub Copilot in OpenCode
 - `claude auth login` — Claude Code
 
-Git credential helpers are configured per host at system level in the Dockerfile (`gh` for github.com, `glab` for git.ia.surf.nl and gitlab.com), so plain `git clone/pull/push` over HTTPS works once `gh` and `glab` are logged in. No `gh auth setup-git` or SSH keys needed.
+Git credential helpers are configured per host at system level in the Dockerfile (`gh` for github.com, `glab` for git.sdp.surf.nl, the old archived git.ia.surf.nl, and gitlab.com), so plain `git clone/pull/push` over HTTPS works once `gh` and `glab` are logged in. No `gh auth setup-git` or SSH keys needed.
 
 Available git TUI tools:
 
