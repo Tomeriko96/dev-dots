@@ -96,6 +96,10 @@ jobs:
             exit "$failed"
           '
 
+      - name: Shell tests (cd/zoxide)
+        # bash -ic for the same PATH as an interactive shell (uv, starship).
+        run: devcontainer exec --workspace-folder . bash -ic 'bash bash/tests/test-cd.sh'
+
       - name: Summary
         if: always()
         run: |
