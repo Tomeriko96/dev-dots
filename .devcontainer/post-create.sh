@@ -8,11 +8,11 @@ echo "==========================================================================
 echo "Running as: $(id)"
 echo ""
 
-# Verify key CLIs are available (all installed via Dockerfile)
+# Verify key CLIs are available (Dockerfile: APT, the locked mise toolchain, vendor installers)
 echo "================================================================================"
 echo "CLIs AVAILABLE"
 echo "================================================================================"
-for cli in nvim opencode claude uv starship zoxide node npm csvlens micromamba az azcopy azd kubectl helm flux glab aws; do
+for cli in claude opencode mise nvim node npm npx uv micromamba starship zoxide eza rg fdfind fzf tokei onefetch csvlens jq az azcopy azd kubectl helm flux sops glab aws; do
   which "$cli" 2>/dev/null && echo "[OK]     $cli: $(which $cli)" || echo "[MISSING] $cli"
 done
 

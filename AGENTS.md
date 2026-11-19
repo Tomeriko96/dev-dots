@@ -65,9 +65,12 @@ cat /workspace/tool-versions.txt
 ### Add a system package
 Edit the `apt-get install` list in the `Dockerfile` section "Install all APT-managed packages".
 
-### Add a CLI tool version
-1. Add the version pin as an `ARG` in the "Pinned versions" section at the top of the `Dockerfile`
-2. Add the installation block before the "Non-root development user" section
+### Add or update a CLI tool
+CLI tools are pinned in `.devcontainer/mise.toml` and checksum-locked in `.devcontainer/mise.lock` (Linux x86_64).
+1. Edit or add the entry in `mise.toml`. Prefer an explicit `aqua:` or `github:` backend.
+2. Run `.devcontainer/update-mise-lock.sh --verify`
+3. If it adds an executable, add it to the symlink list in the `Dockerfile` "Locked CLI toolchain" step
+4. Commit `mise.toml` and `mise.lock` together
 
 ### Customize bash
 - **Functions:** `bash/.config/bash/functions`
@@ -91,7 +94,7 @@ npx --yes skills add cedanl/.github --skill '*' -a claude-code -a opencode -a pi
 
 ## Notes
 
-- Tool versions are pinned in `Dockerfile` (update manually; rebuild needed)
+- CLI tool versions are pinned in `.devcontainer/mise.toml` / `mise.lock` (rebuild needed after a change). `mise` itself is pinned in the `Dockerfile`.
 - First build takes 5–10 minutes; subsequent builds are cached
 - Container runs on Debian Bookworm; your host (Fedora Atomic Sway) is separate
 - Credentials in `.env` are not readable by Claude via hook (`block-env-read.sh`)
