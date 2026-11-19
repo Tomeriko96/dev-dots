@@ -3,3 +3,7 @@ tool-versions.txt
 
 # Claude Code local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Clones of other repos to work on (see AGENTS.md "Working on another repo")
+/work/
+/factory-template/

@@ -86,7 +86,13 @@
       "Bash(git log *)",
       "Bash(gh api *)",
       "Bash(gh auth *)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(/workspaces/dev-dots/scripts/work-rm:*)",
+      "Bash(scripts/work-rm:*)",
+      "Bash(rm:*)",
+      "Bash(tmux:*)",
+      "Bash(gh issue:*)",
+      "Bash(glab:*)"
     ],
     "deny": [
       "Read(./.entire/metadata/**)",

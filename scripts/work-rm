@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# work-rm <repo|path>…  — delete a clone in /workspaces/dev-dots/work (plus its <repo>-worktrees/)
+# only when nothing would be lost: no uncommitted, staged or untracked files (ignored files such
+# as .factory/ do not count), no stash, no commit that is on no remote, in the clone and in every
+# linked worktree, and no tmux pane working inside it.
+#   -n  dry run: check only.
+set -euo pipefail
+WORK=/workspaces/dev-dots/work
+dry=0
+[ "${1:-}" = -n ] && { dry=1; shift; }
+[ $# -gt 0 ] || { echo "usage: work-rm [-n] <repo|path>…" >&2; exit 2; }
+
+problems() { # $1 = a git work tree; prints one line per problem
+  local d=$1 s
+  s=$(git -C "$d" status --porcelain 2>/dev/null) || { echo "$d: not a git work tree"; return; }
+  [ -z "$s" ] || echo "$d: uncommitted/staged/untracked changes: $(echo "$s" | head -3 | tr '\n' ' ')"
+  [ -z "$(git -C "$d" stash list 2>/dev/null)" ] || echo "$d: has a stash"
+}
+
+rc=0
+for arg in "$@"; do
+  case "$arg" in /*) p=$arg ;; *) p=$WORK/$arg ;; esac
+  p=$(realpath -m "$p")
+  case "$p" in "$WORK"/?*) ;; *) echo "refused: $p is not inside $WORK" >&2; rc=1; continue ;; esac
+  [ -d "$p" ] || { echo "skip: $p does not exist"; continue; }
+  wt="$p-worktrees"; out=()
+
+  if git -C "$p" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$p" fetch --all --quiet 2>/dev/null || out+=("$p: git fetch failed, cannot prove commits are on a remote")
+    while IFS= read -r t; do
+      [ -n "$t" ] && [ -d "$t" ] || continue
+      while IFS= read -r line; do [ -n "$line" ] && out+=("$line"); done < <(problems "$t")
+    done < <(git -C "$p" worktree list --porcelain | sed -n 's/^worktree //p')
+    # commits reachable from a local branch or HEAD that no remote-tracking ref contains
+    local_only=$(git -C "$p" rev-list --branches HEAD --not --remotes 2>/dev/null | head -5)
+    [ -z "$local_only" ] || out+=("$p: commits on no remote: $(echo "$local_only" | cut -c1-8 | tr '\n' ' ')")
+  else
+    out+=("$p: not a git repo (nothing proves it is backed up)")
+  fi
+
+  if command -v tmux >/dev/null && tmux ls >/dev/null 2>&1; then
+    while IFS=' ' read -r pane cwd; do
+      case "$cwd" in "$p"|"$p"/*|"$wt"|"$wt"/*) out+=("$p: tmux pane $pane is working in $cwd") ;; esac
+    done < <(tmux list-panes -a -F '#{session_name}:#{window_name}.#{pane_index} #{pane_current_path}')
+  fi
+
+  if [ ${#out[@]} -gt 0 ]; then
+    echo "refused: $p"; printf '  - %s\n' "${out[@]}"; rc=1; continue
+  fi
+  if (( dry )); then echo "ok (dry run): $p${wt:+ and $wt}"; continue; fi
+  rm -rf -- "$p"; [ -d "$wt" ] && rm -rf -- "$wt"
+  echo "removed: $p"
+done
+exit $rc
