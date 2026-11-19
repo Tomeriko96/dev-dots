@@ -10,7 +10,8 @@ _entire_auto_enable() {
   case "$origin" in
     *cedanl/* | *surf-internal/npuls/ceda/*)
       entire enable -y --agent "$agent" &>/dev/null || true
-      entire configure --checkpoint-remote github:cedanl/entire-checkpoints &>/dev/null || true
+      # branch-backend: checkpoints op entire/checkpoints/v1 i.p.v. losse refs (alles zichtbaar op één branch)
+      entire configure --checkpoint-backend branch --checkpoint-remote github:cedanl/entire-checkpoints &>/dev/null || true
       _entire_keep_local
       ;;
   esac
