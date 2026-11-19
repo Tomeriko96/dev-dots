@@ -1,0 +1,109 @@
+name: devcontainer
+
+# Builds the full devcontainer image and runs its lifecycle (post-create and
+# post-start) with the devcontainer CLI, then checks that every tool runs.
+# The image is not pushed anywhere.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".devcontainer/**"
+      - "bash/**"
+      - "starship/**"
+      - ".github/workflows/devcontainer.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".devcontainer/**"
+      - "bash/**"
+      - "starship/**"
+      - ".github/workflows/devcontainer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devcontainer-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVCONTAINER_CLI_VERSION: "0.90.0"
+
+jobs:
+  build:
+    name: Build and smoke-test
+    # mise.lock only covers Linux x86_64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install devcontainer CLI
+        run: npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}"
+
+      - name: Build image
+        run: |
+          start=$(date +%s)
+          devcontainer build --workspace-folder . --image-name dev-dots:ci
+          echo "BUILD_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+
+      - name: Start container (runs post-create and post-start)
+        # The runner's UID is 1001. Remapping dev to it would only re-own $HOME,
+        # not /workspace, so keep dev at the image's UID 1000.
+        run: devcontainer up --workspace-folder . --update-remote-user-uid-default off
+
+      - name: Smoke test
+        # bash -i: OpenCode's installer adds its PATH line to ~/.bashrc, which
+        # returns early in non-interactive shells.
+        run: |
+          devcontainer exec --workspace-folder . bash -ic '
+            set -u
+            failed=0
+            for cli in claude opencode mise \
+                node npm npx uv uvx micromamba \
+                gh glab entire git-remote-entire lazygit delta \
+                rg eza tokei onefetch csvlens starship zoxide nvim \
+                kubectl helm flux sops aws azcopy azd az \
+                git jq fdfind fzf bat tmux ffmpeg; do
+              if command -v "$cli" >/dev/null; then
+                echo "[OK]      $cli"
+              else
+                echo "[MISSING] $cli"; failed=1
+              fi
+            done
+            test -x "$HOME/.local/share/gh/extensions/gh-dash/gh-dash" \
+              && echo "[OK]      gh-dash extension" \
+              || { echo "[MISSING] gh-dash extension"; failed=1; }
+
+            for host in github.com git.sdp.surf.nl git.ia.surf.nl gitlab.com; do
+              git config --system --get "credential.https://${host}.helper" >/dev/null \
+                && echo "[OK]      credential helper $host" \
+                || { echo "[MISSING] credential helper $host"; failed=1; }
+            done
+
+            test "$(id -un)" = dev && echo "[OK]      runs as dev" || { echo "[FAIL] user is $(id -un)"; failed=1; }
+            test -s /workspace/tool-versions.txt \
+              && echo "[OK]      post-create wrote tool-versions.txt" \
+              || { echo "[FAIL] post-create did not write tool-versions.txt"; failed=1; }
+            test -x "$HOME/.claude/hooks/block-env-read.sh" \
+              && jq -e ".hooks.PreToolUse | length > 0" "$HOME/.claude/settings.json" >/dev/null \
+              && echo "[OK]      Claude .env hook installed" \
+              || { echo "[FAIL] Claude .env hook missing"; failed=1; }
+
+            claude --version; opencode --version; entire version | head -n1
+            exit "$failed"
+          '
+
+      - name: Summary
+        if: always()
+        run: |
+          size=$(docker image inspect dev-dots:ci --format '{{.Size}}' 2>/dev/null || echo 0)
+          {
+            echo "### devcontainer image"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image size | $(( size / 1000 / 1000 )) MB |"
+            echo "| Build time | ${BUILD_SECONDS:-n/a} s |"
+          } >> "$GITHUB_STEP_SUMMARY"
