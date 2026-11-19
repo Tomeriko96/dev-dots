@@ -24,6 +24,17 @@ This authenticates:
 2. **Open editor** — `nvim .` or `vim`
 3. **Work** — use Claude Code CLI for assistance
 
+## Autonomy (standing instruction from the user)
+
+Work as autonomously as possible in this container. The container is the boundary, and
+everything of value lives on GitHub and SURF GitLab, so a deleted local file is not a loss.
+- Claude runs in bypass mode without permission prompts (`permissions.defaultMode:
+  bypassPermissions` in `~/.claude/settings.json`, set by `post-create.sh`); only `.env` reads
+  stay blocked. Do not ask for permission to run, edit or delete; act and report.
+- Ask the user only for content decisions you cannot take from the repo, the issue or these
+  instructions. Everything else: pick the sensible default, do it, say what you did.
+- Before deleting a git clone or work tree, make sure nothing unpushed is lost (see `work-rm`).
+
 ## Working on another repo (factory)
 
 **If your working directory is inside `/workspaces/dev-dots/work/`, you are the worker: skip

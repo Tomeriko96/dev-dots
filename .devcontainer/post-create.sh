@@ -115,7 +115,8 @@ if [ -d "$REPO_HOOKS_DIR" ]; then
   echo "[OK] Hooks installed to $CLAUDE_HOOKS_DIR"
 fi
 
-# Container-wide settings to merge (hook + common permissions)
+# Container-wide settings to merge (hook + permissions). The container is the boundary:
+# Claude runs in bypass mode without permission prompts; only the .env reads stay denied.
 CONTAINER_SETTINGS=$(cat <<'JSONEOF'
 {
   "hooks": {
@@ -131,8 +132,20 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
       }
     ]
   },
+  "skipDangerousModePermissionPrompt": true,
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "WebFetch",
+      "WebSearch",
+      "Skill",
       "Bash(gh repo:*)",
       "Bash(git clone:*)",
       "Bash(git add:*)",
@@ -156,11 +169,13 @@ JSONEOF
 if [ -f "$CLAUDE_SETTINGS" ]; then
   MERGED=$(jq -n --argjson existing "$(cat "$CLAUDE_SETTINGS")" --argjson new "$CONTAINER_SETTINGS" '
     $existing + {
+      skipDangerousModePermissionPrompt: true,
       hooks: (($existing.hooks // {}) + $new.hooks),
-      permissions: {
+      permissions: (($existing.permissions // {}) + {
+        defaultMode: $new.permissions.defaultMode,
         allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique),
         deny:  (($existing.permissions.deny  // []) + ($new.permissions.deny  // []) | unique)
-      }
+      })
     }
   ')
   echo "$MERGED" > "$CLAUDE_SETTINGS"
