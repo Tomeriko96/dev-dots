@@ -121,9 +121,14 @@ Send this as the worker's first message (one line, so `send-keys` sends it as on
 ### 6. Hand over, then stay out
 **Unattended (the user is away or asleep):** run `/workspaces/dev-dots/scripts/worker-watch [hours]`
 in the background. It approves permission prompts in every worker window (logged in
-`work/worker-watch.log`) and exits when a worker has waited more than 10 minutes on a question,
-so you can look at it: answer routine questions with the recommended option, leave content
-decisions for the user, then start the watch again.
+`work/worker-watch.log`) and wakes you (exits) when a worker waits more than 10 minutes on a
+question dialog (exit 3) or sits idle with an unchanged screen for 15 minutes (exit 4). Then:
+- the worker asks something: answer it (routine: the recommended option; a fix a reviewer or
+  the worker itself found in its own PR: `/factory rework <id> <what>`); never merge;
+- its factory is finished (step 7): close it;
+- it rightly waits (a PR for the user to merge): `scripts/worker-watch ack <window>`, so that
+  screen does not wake you again;
+then start the watch again in the background.
 
 Once `/remote-control` is on and the factory command is sent, the worker talks to the user, not
 you. Report the window name and the remote-control URL, then leave it: do not read its

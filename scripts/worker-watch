@@ -1,45 +1,75 @@
 #!/usr/bin/env bash
-# worker-watch [hours] — watch every tmux window except this one.
-# - A permission prompt ("Do you want to proceed?", "…make this edit", "…create", "…delete") is
-#   approved at once (option "Yes"), and logged with the command it was about.
-# - A question dialog (Claude's AskUserQuestion) is left alone. When one has waited longer than
-#   QUESTION_WAIT seconds, the script prints it and exits, so the orchestrator can look at it.
-# - Exits after [hours] (default 8) as a heartbeat.
+# worker-watch [hours] — watch every tmux window except this one, for the orchestrator.
+# - Permission prompts ("Do you want to proceed?", "…make this edit", "…create", "…delete") are
+#   approved at once (option "Yes") and logged with what they were about.
+# - Exit 3: a worker has shown a question dialog (AskUserQuestion) for QUESTION_WAIT seconds.
+# - Exit 4: a worker has sat idle (no "esc to interrupt", no dialog) with an unchanged screen for
+#   IDLE_WAIT seconds: it may be done, or asking something in plain text.
+#   Both print the window and its screen, so the orchestrator can answer or close it.
+# - The orchestrator acknowledges a screen it has dealt with by appending "<pane> <hash>" (the
+#   hash is printed) to $ACK; that exact screen does not wake it again.
+# - Exit 0 after [hours] (default 8) as a heartbeat.
 # Log: /workspaces/dev-dots/work/worker-watch.log
 set -uo pipefail
-HOURS=${1:-8}; QUESTION_WAIT=${QUESTION_WAIT:-600}; POLL=${POLL:-15}
+HOURS=${1:-8}; QUESTION_WAIT=${QUESTION_WAIT:-600}; IDLE_WAIT=${IDLE_WAIT:-900}; POLL=${POLL:-15}
 LOG=/workspaces/dev-dots/work/worker-watch.log
+ACK=${ACK:-/workspaces/dev-dots/work/worker-watch.ack}
 SELF=${TMUX_PANE:-none}
-declare -A since last lastt
+touch "$ACK"
+hash_of() { tmux capture-pane -p -t "$1" | grep -v -E '[0-9]+m? ?[0-9]*s ·|tokens|esc to interrupt' | md5sum | cut -c1-12; }
+if [ "${1:-}" = ack ]; then   # worker-watch ack <window>…: acknowledge the current screen
+  shift
+  for w in "$@"; do p=$(tmux display -p -t "$w" '#{pane_id}'); echo "$p $(hash_of "$w")" >> "$ACK"; echo "acked $w ($p)"; done
+  exit 0
+fi
+declare -A since last lastt idle_hash idle_since
 end=$(( $(date +%s) + HOURS*3600 ))
 log() { echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
-log "watch start (${HOURS}h, question wait ${QUESTION_WAIT}s)"
+report() { # $1 exit code, $2 pane, $3 name, $4 hash, $5 screen, $6 reason
+  log "$6 in $3 (pane $2, hash $4)"
+  echo "=== $6 in $3 (pane $2) ack: echo '$2 $4' >> $ACK ==="
+  echo "$5" | grep -v '^\s*$' | tail -30
+  exit "$1"
+}
+log "watch start (${HOURS}h, question ${QUESTION_WAIT}s, idle ${IDLE_WAIT}s)"
 
 while [ "$(date +%s)" -lt "$end" ]; do
   while IFS=' ' read -r pid name; do
     [ "$pid" = "$SELF" ] && continue
     s=$(tmux capture-pane -p -t "$pid" 2>/dev/null) || continue
-    if echo "$s" | grep -qE 'Do you want to (proceed|make this edit|create|delete|overwrite|allow)'; then
-      if echo "$s" | grep -qE '❯ *1\. *Yes'; then
-        what=$(echo "$s" | grep -B12 -E 'Do you want to' | grep -v -E '^\s*$|─' | tail -8 | head -6 | sed 's/^ *//' | tr '\n' ' ' | cut -c1-240)
-        now=$(date +%s)
-        if [ "${last[$pid]:-}" = "$what" ] && (( now - ${lastt[$pid]:-0} < 60 )); then sleep 1; continue; fi
-        last[$pid]=$what; lastt[$pid]=$now
-        tmux send-keys -t "$pid" Enter
-        log "approved in $name: $what"
-        sleep 2; continue
-      fi
+    now=$(date +%s)
+
+    # 1. permission prompts: approve
+    if echo "$s" | grep -qE 'Do you want to (proceed|make this edit|create|delete|overwrite|allow)' \
+       && echo "$s" | grep -qE '❯ *1\. *Yes'; then
+      what=$(echo "$s" | grep -B12 -E 'Do you want to' | grep -v -E '^\s*$|─' | tail -8 | head -6 | sed 's/^ *//' | tr '\n' ' ' | cut -c1-240)
+      if [ "${last[$pid]:-}" = "$what" ] && (( now - ${lastt[$pid]:-0} < 60 )); then continue; fi
+      last[$pid]=$what; lastt[$pid]=$now
+      tmux send-keys -t "$pid" Enter
+      log "approved in $name: $what"
+      continue
     fi
-    if echo "$s" | grep -qE 'Enter to select'; then
-      now=$(date +%s); since[$pid]=${since[$pid]:-$now}
-      if (( now - ${since[$pid]} >= QUESTION_WAIT )); then
-        log "question waiting in $name for $(( (now - ${since[$pid]})/60 )) min"
-        echo "=== QUESTION in $name ($pid) ==="
-        echo "$s" | grep -v '^\s*$' | tail -25
-        exit 3
+
+    # screen hash without the spinner/timer lines, so a ticking clock is not "change"
+    h=$(hash_of "$pid")
+    acked=0; grep -qxF "$pid $h" "$ACK" && acked=1
+
+    # 2. question dialogs
+    if echo "$s" | grep -qE 'Enter to select|Enter to confirm'; then
+      since[$pid]=${since[$pid]:-$now}
+      if (( acked == 0 && now - ${since[$pid]} >= QUESTION_WAIT )); then
+        report 3 "$pid" "$name" "$h" "$s" "question waiting $(( (now - ${since[$pid]})/60 )) min"
       fi
-    else
-      unset "since[$pid]"
+      continue
+    fi
+    unset "since[$pid]"
+
+    # 3. idle with an unchanged screen
+    # busy: the main turn runs, or background agents run (their rows start with ◯)
+    if echo "$s" | grep -qE 'esc to interrupt|^ *◯ '; then unset "idle_hash[$pid]" "idle_since[$pid]"; continue; fi
+    if [ "${idle_hash[$pid]:-}" != "$h" ]; then idle_hash[$pid]=$h; idle_since[$pid]=$now; continue; fi
+    if (( acked == 0 && now - ${idle_since[$pid]} >= IDLE_WAIT )); then
+      report 4 "$pid" "$name" "$h" "$s" "idle $(( (now - ${idle_since[$pid]})/60 )) min"
     fi
   done < <(tmux list-panes -a -F '#{pane_id} #{window_name}')
   sleep "$POLL"
