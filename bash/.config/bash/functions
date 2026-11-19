@@ -3,51 +3,21 @@
 # Entire - auto-enable per CEDA repo
 # =====================
 # CEDA-repo's: de GitHub-org cedanl en de GitLab-groep surf-internal/npuls/ceda (herkenning aan de origin-URL).
-# Checkpoints gaan voor beide naar dezelfde privé GitHub-repo: Entire kent als checkpoint-remote alleen `github`.
+# Checkpoints gaan voor beide naar dezelfde privé GitHub-repo (branch entire/checkpoints/v1).
+# De logica staat in entire-setup.sh: die zet de repo waar je staat aan én elke repo onder de workspace-root,
+# zodat het niet uitmaakt waar je Claude start.
 #
 # Privacy: Entire bewaart sessietranscripten (prompts, tool-output, antwoorden) in die repo, die gevoelige
 # data kan bevatten. Daarom: eenmalige melding per repo, en opt-out via
 #   export DEVDOTS_ENTIRE=0            (alle repo's, bijv. in ~/.bashrc of remoteEnv)
 #   git config devdots.entire false    (alleen deze repo)
-_entire_auto_enable() {
-  local agent="$1" origin notice
-  [[ "${DEVDOTS_ENTIRE:-1}" == "0" ]] && return 0
-  git rev-parse --is-inside-work-tree &>/dev/null || return 0
-  [[ "$(git config --get devdots.entire 2>/dev/null)" == "false" ]] && return 0
-  origin=$(git remote get-url origin 2>/dev/null || true)
-  case "$origin" in
-    *cedanl/* | *surf-internal/npuls/ceda/*)
-      notice=$(git rev-parse --git-path devdots-entire-notified 2>/dev/null) || notice=""
-      if [[ -n "$notice" && ! -e "$notice" ]]; then
-        {
-          echo "┌─ Entire staat aan voor deze repo ───────────────────────────────────"
-          echo "│ Sessietranscripten (prompts, tool-output en antwoorden) worden bewaard"
-          echo "│ in github:cedanl/entire-checkpoints. Zet geen geheimen of persoonsgegevens"
-          echo "│ in een sessie als je dat niet wilt delen."
-          echo "│ Uitzetten: git config devdots.entire false   (deze repo)"
-          echo "│            export DEVDOTS_ENTIRE=0           (alle repo's)"
-          echo "└──────────────────────────────────────────────────────────────────────"
-        } >&2
-        : >"$notice" 2>/dev/null || true
-      fi
-      entire enable -y --agent "$agent" &>/dev/null || true
-      entire configure --checkpoint-remote github:cedanl/entire-checkpoints &>/dev/null || true
-      _entire_keep_local
-      ;;
-  esac
-}
 
-# Houdt wat Entire toevoegt lokaal: `entire enable` schrijft zijn hooks in .claude/settings.json, een bestand dat
-# repo's vaak in git hebben (en dat een publieke spiegel meeneemt). entire-local-hooks.py zet ze in
-# .claude/settings.local.json en herstelt settings.json; .entire/ en het lokale bestand gaan in info/exclude.
-_entire_keep_local() {
-  local exclude pattern
-  exclude=$(git rev-parse --git-path info/exclude 2>/dev/null) || return 0
-  mkdir -p "$(dirname "$exclude")"
-  for pattern in "/.entire/" "/.claude/settings.local.json"; do
-    grep -qxF "$pattern" "$exclude" 2>/dev/null || echo "$pattern" >>"$exclude"
-  done
-  (cd "$(git rev-parse --show-toplevel)" && python3 "$HOME/.config/bash/entire-local-hooks.py") || true
+# Handmatig draaien of laten controleren: entire-setup [--check] [pad ...]
+entire-setup() { bash "$HOME/.config/bash/entire-setup.sh" "$@"; }
+
+_entire_auto_enable() {
+  bash "$HOME/.config/bash/entire-setup.sh" --quiet --agent "$1" ||
+    echo "Entire: niet overal aangezet (zie hierboven). Controleer met: entire-setup --check" >&2
 }
 
 # =====================
