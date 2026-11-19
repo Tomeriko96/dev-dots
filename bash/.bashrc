@@ -137,4 +137,6 @@ fi
 eval "$(uv generate-shell-completion bash)"
 
 # PATH comes from ENV PATH in the Dockerfile; do not prepend it again here,
-# or every nested shell (tmux, bash -i) duplicates the entries.
+# or every nested shell (tmux, bash -i) duplicates the entries. The vendor
+# blocks that get appended below this file at image build (micromamba,
+# OpenCode) still prepend; the last Dockerfile step appends a PATH dedupe line.

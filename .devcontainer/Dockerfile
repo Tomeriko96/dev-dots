@@ -243,6 +243,17 @@ RUN set -eux; \
         | bash; \
     "$HOME/.local/bin/claude" --version
 
+# The micromamba and OpenCode blocks above prepend to PATH in ~/.bashrc without
+# a guard, so every nested shell (tmux, bash -i, devcontainer's login probe)
+# would add them again. Keep this the last step that writes ~/.bashrc: it drops
+# repeated PATH entries, keeping the first occurrence of each.
+RUN set -eux; \
+    printf '%s\n' \
+        "" \
+        "# Drop repeated PATH entries (added at image build, see Dockerfile)" \
+        "PATH=\"\$(printf %s \"\$PATH\" | awk -v RS=: -v ORS=: '!s[\$0]++')\"; PATH=\"\${PATH%:}\"" \
+        >> "$HOME/.bashrc"
+
 # ==============================================================================
 # Default command
 # ==============================================================================
