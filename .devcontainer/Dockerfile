@@ -119,7 +119,7 @@ RUN set -eux; \
     mise --version
 
 # ==============================================================================
-# Locked CLI toolchain (23 tools, see mise.toml)
+# Locked CLI toolchain (24 tools, see mise.toml)
 #
 # Installed system-wide under /usr/local/share/mise. --locked makes the build use
 # only the URLs and checksums in mise.lock. Each executable is then symlinked into
@@ -140,7 +140,7 @@ RUN set -eux; \
     mise install --locked; \
     for bin in \
         node npm npx corepack uv uvx micromamba \
-        gh glab lazygit delta gh-dash \
+        gh glab entire git-remote-entire lazygit delta gh-dash \
         rg eza tokei onefetch csvlens starship zoxide nvim \
         kubectl helm flux sops aws aws_completer azcopy azd; \
     do \
@@ -151,7 +151,7 @@ RUN set -eux; \
     rm -rf /tmp/mise-cache /tmp/mise-state "$MISE_DATA_DIR/downloads"; \
     \
     node --version; npm --version; uv --version; micromamba --version; \
-    gh --version; glab version; lazygit --version; delta --version; gh-dash --version; \
+    gh --version; glab version; entire version; lazygit --version; delta --version; gh-dash --version; \
     rg --version; eza --version; tokei --version; onefetch --version; csvlens --version; \
     starship --version; zoxide --version; nvim --version | head -n1; \
     kubectl version --client; helm version; flux --version; sops --version; \

@@ -12,7 +12,7 @@ echo ""
 echo "================================================================================"
 echo "CLIs AVAILABLE"
 echo "================================================================================"
-for cli in claude opencode mise nvim node npm npx uv micromamba starship zoxide eza rg fdfind fzf tokei onefetch csvlens jq az azcopy azd kubectl helm flux sops glab aws; do
+for cli in claude opencode mise entire nvim node npm npx uv micromamba starship zoxide eza rg fdfind fzf tokei onefetch csvlens jq az azcopy azd kubectl helm flux sops glab aws; do
   which "$cli" 2>/dev/null && echo "[OK]     $cli: $(which $cli)" || echo "[MISSING] $cli"
 done
 

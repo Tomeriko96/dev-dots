@@ -20,6 +20,7 @@ micromamba = "2.8.1-0"                     # registry: github:mamba-org/micromam
 # Git
 "aqua:cli/cli" = "2.105.0"                   # gh
 "gitlab:gitlab-org/cli" = "1.58.0"           # glab
+"aqua:entireio/cli" = "0.13.4"               # entire (checkpoints, see bash functions)
 "aqua:jesseduffield/lazygit" = "0.60.0"
 "aqua:dandavison/delta" = "0.18.0"
 "aqua:dlvhdr/gh-dash" = "4.23.1"
@@ -40,7 +41,7 @@ micromamba = "2.8.1-0"                     # registry: github:mamba-org/micromam
 "aqua:kubernetes/kubernetes/kubectl" = "1.31.14"
 "aqua:helm/helm" = "3.16.0"
 "aqua:fluxcd/flux2" = "2.4.0"
-"aqua:getsops/sops" = "3.10.2"
+"aqua:getsops/sops" = "3.13.3"
 "aqua:aws/aws-cli" = "2.41.2"
 "github:Azure/azure-storage-azcopy" = "10.26.0"
-"aqua:Azure/azure-dev" = "1.9.5"             # azd
+"aqua:Azure/azure-dev" = "1.39.1"            # azd

@@ -21,9 +21,9 @@ Defined in `.devcontainer/Dockerfile`:
 
 - Debian bookworm-slim base image (Linux x86_64)
 - Core dev tools (APT): `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd-find`, `fzf`, `bat`, `vim`, `openssh-client`, `build-essential`, Azure CLI (`az`)
-- A checksum-locked toolchain of 23 CLIs installed with [mise](https://mise.jdx.dev) (see [Pinned toolchain](#pinned-toolchain-mise)):
+- A checksum-locked toolchain of 24 CLIs installed with [mise](https://mise.jdx.dev) (see [Pinned toolchain](#pinned-toolchain-mise)):
   - Runtimes: Node.js 24 (npm/npx), `uv`, `micromamba`
-  - Git: `gh`, `glab`, `lazygit`, `delta`, `gh-dash`
+  - Git: `gh`, `glab`, `entire` (Entire checkpoints), `lazygit`, `delta`, `gh-dash`
   - Search, data and shell: `ripgrep`, `eza`, `tokei`, `onefetch`, `csvlens`, `starship`, `zoxide`
   - Editor: Neovim
   - DevOps and cloud: `kubectl`, `helm`, `flux`, `sops`, `aws`, `azcopy`, `azd`
@@ -37,7 +37,7 @@ Defined in `.devcontainer/Dockerfile`:
 
 ### Pinned toolchain (mise)
 
-The 23 CLIs above are declared in `.devcontainer/mise.toml` and locked in `.devcontainer/mise.lock`, which records the exact download URL and sha256 for each tool on Linux x86_64. The image build runs `mise install --locked`, so it fails instead of installing anything that doesn't match the lock. The tools are installed under `/usr/local/share/mise` and symlinked into `/usr/local/bin`. They don't need mise at runtime and don't interfere with a project's own `mise.toml`.
+The 24 CLIs above are declared in `.devcontainer/mise.toml` and locked in `.devcontainer/mise.lock`, which records the exact download URL and sha256 for each tool on Linux x86_64. The image build runs `mise install --locked`, so it fails instead of installing anything that doesn't match the lock. The tools are installed under `/usr/local/share/mise` and symlinked into `/usr/local/bin`. They don't need mise at runtime and don't interfere with a project's own `mise.toml`.
 
 To add or update a tool:
 
