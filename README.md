@@ -19,26 +19,40 @@ This repository combines dotfiles, container setup scripts, and workspace automa
 
 Defined in `.devcontainer/Dockerfile`:
 
-- Debian bookworm-slim base image
-- Core dev tools: `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd-find`, `bat`, `openssh-client`, `build-essential`
-- Data and search utilities: `ripgrep`, `fzf`, `csvlens`, `tokei`, `onefetch`
-- Modern shell utilities: `eza` (ls replacement)
-- Node.js LTS (for npm and Node-based tools)
-- Neovim (pinned version)
+- Debian bookworm-slim base image (Linux x86_64)
+- Core dev tools (APT): `git`, `curl`, `tmux`, `htop`, `jq`, `wget`, `fd-find`, `fzf`, `bat`, `vim`, `openssh-client`, `build-essential`, Azure CLI (`az`)
+- A checksum-locked toolchain of 24 CLIs installed with [mise](https://mise.jdx.dev) (see [Pinned toolchain](#pinned-toolchain-mise)):
+  - Runtimes: Node.js 24 (npm/npx), `uv`, `micromamba`
+  - Git: `gh`, `glab`, `entire` (Entire checkpoints), `lazygit`, `delta`, `gh-dash`
+  - Search, data and shell: `ripgrep`, `eza`, `tokei`, `onefetch`, `csvlens`, `starship`, `zoxide`
+  - Editor: Neovim
+  - DevOps and cloud: `kubectl`, `helm`, `flux`, `sops`, `aws`, `azcopy`, `azd`
+- `claude` (Claude Code) and `opencode` from their vendor installers
 - Non-root `dev` user and workspace-ready permissions
-- CLI installs for `claude` (Claude Code), `opencode`, `uv`, `micromamba`, `starship`, and `zoxide`
-- DevOps and cloud CLIs: `kubectl`, `helm`, `flux`, `sops`, `glab`, `aws`, `az`, `azcopy`, `azd`
 - Media and browser automation: `ffmpeg` and the Playwright Chromium runtime libraries
 - Dotfiles pre-loaded: `.bashrc`, bash helpers, starship config, tmux config, `onboard` wizard
 - LazyVim starter pre-cloned to `~/.config/nvim` (plugins download on first `nvim` launch)
 - **Git tooling**: `lazygit` (TUI git client), `gh` (GitHub CLI), `delta` (syntax-highlighted diffs), `gh-dash` (GitHub dashboard TUI)
 - System-level git pager configured to use `delta` (user `~/.gitconfig` takes precedence)
 
+### Pinned toolchain (mise)
+
+The 24 CLIs above are declared in `.devcontainer/mise.toml` and locked in `.devcontainer/mise.lock`, which records the exact download URL and sha256 for each tool on Linux x86_64. The image build runs `mise install --locked`, so it fails instead of installing anything that doesn't match the lock. The tools are installed under `/usr/local/share/mise` and symlinked into `/usr/local/bin`. They don't need mise at runtime and don't interfere with a project's own `mise.toml`.
+
+To add or update a tool:
+
+1. Edit its version (or add an entry) in `.devcontainer/mise.toml`.
+2. Run `.devcontainer/update-mise-lock.sh --verify` inside the container. It rewrites `mise.lock`, checks that it matches the manifest and does a clean locked install in a temp dir. Use `--bump` to move ranges such as `node = "24"` to the newest matching release.
+3. If the tool brings a new executable, add it to the symlink list in the Dockerfile.
+4. Commit `mise.toml` and `mise.lock` together and rebuild.
+
+The lock only covers Linux x86_64. Building on ARM needs emulation, or an arm64 entry in the lock plus a tested build. Claude Code and OpenCode stay on their vendor installers (latest stable at build time). `mise` itself is pinned by version and sha256 in the Dockerfile.
+
 ### Post-Create Provisioning
 
 Defined in `.devcontainer/post-create.sh`:
 
-- CLI availability verification (nvim, opencode, claude, uv, starship, zoxide, node, npm, csvlens, micromamba, az, azcopy, azd, kubectl, helm, flux, glab, aws)
+- CLI availability verification (claude, opencode, mise, the mise toolchain, az and the main APT tools)
 - Git tooling availability summary on startup
 - Helpful tips printed on startup (az login, lazygit, gh dash, onboard)
 - Tool versions written to `/workspace/tool-versions.txt`
@@ -88,9 +102,12 @@ From `bash/` and `starship/`:
 │   ├── devcontainer.json
 │   ├── hooks/
 │   │   └── block-env-read.sh
+│   ├── mise.lock
+│   ├── mise.toml
 │   ├── onboard.sh
 │   ├── post-create.sh
-│   └── tmux.conf
+│   ├── tmux.conf
+│   └── update-mise-lock.sh
 ├── bash/
 │   ├── .bashrc
 │   └── .config/bash/

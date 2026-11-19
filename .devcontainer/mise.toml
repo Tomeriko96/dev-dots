@@ -1,0 +1,47 @@
+# Pinned CLI toolchain for the full dev-dots devcontainer.
+#
+# The Dockerfile installs these system-wide with `mise install --locked`, so every
+# download is checked against the URL and checksum in mise.lock (Linux x86_64).
+#
+# To change a tool: edit its version here, then run
+#   .devcontainer/update-mise-lock.sh
+# and commit mise.toml and mise.lock together.
+#
+# Backends are explicit so a registry change upstream can't silently switch how a
+# tool is fetched. aqua/github backends download upstream release binaries and
+# verify checksums; none of these need a compiler or language runtime to install.
+
+[tools]
+# Runtimes
+node = "24"
+"aqua:astral-sh/uv" = "0.11.1"
+micromamba = "2.8.1-0"                     # registry: github:mamba-org/micromamba-releases
+
+# Git
+"aqua:cli/cli" = "2.105.0"                   # gh
+"gitlab:gitlab-org/cli" = "1.58.0"           # glab
+"aqua:entireio/cli" = "0.13.4"               # entire (checkpoints, see bash functions)
+"aqua:jesseduffield/lazygit" = "0.60.0"
+"aqua:dandavison/delta" = "0.18.0"
+"aqua:dlvhdr/gh-dash" = "4.23.1"
+
+# Search, data and shell
+"aqua:BurntSushi/ripgrep" = "15.1.0"
+"aqua:eza-community/eza" = "0.23.5"
+"aqua:XAMPPRocky/tokei" = "12.1.2"
+"aqua:o2sh/onefetch" = "2.22.0"
+"aqua:YS-L/csvlens" = "0.15.1"
+"aqua:starship/starship" = "1.24.2"
+"aqua:ajeetdsouza/zoxide" = "0.9.9"
+
+# Editor
+"aqua:neovim/neovim" = "0.11.6"
+
+# Cloud and Kubernetes
+"aqua:kubernetes/kubernetes/kubectl" = "1.31.14"
+"aqua:helm/helm" = "3.16.0"
+"aqua:fluxcd/flux2" = "2.4.0"
+"aqua:getsops/sops" = "3.13.3"
+"aqua:aws/aws-cli" = "2.41.2"
+"github:Azure/azure-storage-azcopy" = "10.26.0"
+"aqua:Azure/azure-dev" = "1.39.1"            # azd
