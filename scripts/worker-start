@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# worker-start <window> <clone dir under work/> <factory command…>
+# Opens a tmux window, cd's into the clone, starts `claude` through the interactive shell (so the
+# claude() function enables Entire and bypass mode), accepts the start-up popups, turns on remote
+# control, sends the worker brief from AGENTS.md, runs `/factory setup` when the factory has no
+# config yet, then the factory command. Prints the remote-control URL.
+# It stops before typing anything else when Claude did not start, so nothing ends up in bash.
+set -euo pipefail
+W=${1:?window}; D=${2:?dir}; shift 2; CMD="$*"
+ROOT=/workspaces/dev-dots; CLONE=$ROOT/work/$D
+[ -d "$CLONE/.factory" ] || { echo "no factory in $CLONE (run factory-template/install --no-setup)" >&2; exit 1; }
+BRIEF=$(sed -n 's/^> \(Working agreements.*\)$/\1/p' "$ROOT/AGENTS.md")
+[ -n "$BRIEF" ] || { echo "no worker brief in AGENTS.md" >&2; exit 1; }
+
+pane() { tmux capture-pane -p -t "$W"; }
+send() { tmux send-keys -t "$W" -l "$1"; sleep 0.6; tmux send-keys -t "$W" Enter; sleep 1.5; }
+
+tmux new-window -d -n "$W" -c "$ROOT"
+tmux send-keys -t "$W" "cd $CLONE" Enter; sleep 0.5
+tmux send-keys -t "$W" 'claude --model opus' Enter
+
+started=0
+for _ in $(seq 1 60); do
+  sleep 1; s=$(pane)
+  if echo "$s" | grep -q 'bypass permissions'; then started=1; break; fi
+  if echo "$s" | grep -qE 'Enter to confirm|Enter to select'; then
+    sleep 1                                   # let the menu finish drawing
+    for _ in 1 2 3 4; do                      # move until the cursor sits on a "Yes" line
+      pane | grep -qE '❯ *([0-9]+\. *)?Yes' && break
+      tmux send-keys -t "$W" Down; sleep 0.4
+    done
+    if pane | grep -qE '❯ *([0-9]+\. *)?Yes'; then
+      echo "accepted: $(pane | grep -m1 -E 'trust|import|Allow|proceed|safety' | sed 's/^ *//' | cut -c1-70)"
+      tmux send-keys -t "$W" Enter; sleep 2
+    fi
+  fi
+  if pane | grep -q "didn't start"; then break; fi
+done
+[ $started = 1 ] || { echo "claude did not start in $W; nothing else was typed" >&2; pane | tail -8 >&2; exit 1; }
+
+send '/remote-control'; sleep 5
+url=$(pane | grep -o 'https://claude.ai/code/session_[A-Za-z0-9]*' | tail -1 || true)
+send "$BRIEF"
+[ -f "$CLONE/.factory/config.json" ] || send '/factory setup'
+[ -z "$CMD" ] || send "$CMD"
+echo "$W ${url:-<no remote-control url yet>}"

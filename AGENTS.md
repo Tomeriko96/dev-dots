@@ -87,6 +87,10 @@ Check, and fix what you can yourself, so a builder does not hit it halfway:
   The factory puts its worktrees next to the clone, in `work/<repo>-worktrees/` (ignored).
 
 ### 4. Start the worker and the factory, in one go
+**Use `/workspaces/dev-dots/scripts/worker-start <window> <dir in work/> /factory issue <nr>…`.**
+It does all of the below: it only presses Enter on a popup once the cursor is on "Yes", runs
+`/factory setup` when the clone has no factory config yet, and stops before typing anything
+else when Claude did not start (otherwise the commands land in bash). The manual steps:
 Open a tmux window, `cd` into the clone and type `claude`; the window's interactive shell loads
 the `claude()` function from `bash/.config/bash/functions` (Entire + bypass mode). Not the Agent
 tool: a subagent runs in this session, in dev-dots, without Entire, without the clone's factory
@@ -115,6 +119,12 @@ Send this as the worker's first message (one line, so `send-keys` sends it as on
 > Working agreements for this session (the user steers you from a phone through remote control): delivery is a ready-for-review PR (pr, draft false) and run the smoke test, without asking. Take the recommended option yourself for routine choices (effort, bundling, starting a triage plan, smoke test, clean-up) and say so in one line; ask only content questions (which option to build, design choices, unblocking an issue). Keep questions phone-sized: at most 3 options, recommended first, one line each. After every job state change (PR open, merged, needs-human, failed) post one status line like "#233 → PR #281 open, CI running". When a job reaches PR or merged, run /factory next yourself until it finds nothing, then report once that you are done. After a merge, check CI on the base branch: if it fails, first analyse the cause and whether that check is still needed, then propose a fix; do not fix CI on your own. Close issues and clean up worktrees of finished jobs without asking.
 
 ### 6. Hand over, then stay out
+**Unattended (the user is away or asleep):** run `/workspaces/dev-dots/scripts/worker-watch [hours]`
+in the background. It approves permission prompts in every worker window (logged in
+`work/worker-watch.log`) and exits when a worker has waited more than 10 minutes on a question,
+so you can look at it: answer routine questions with the recommended option, leave content
+decisions for the user, then start the watch again.
+
 Once `/remote-control` is on and the factory command is sent, the worker talks to the user, not
 you. Report the window name and the remote-control URL, then leave it: do not read its
 questions back to the user, do not ask about them here, do not send keys (popups included).

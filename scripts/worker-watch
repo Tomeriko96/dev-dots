@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# worker-watch [hours] — watch every tmux window except this one.
+# - A permission prompt ("Do you want to proceed?", "…make this edit", "…create", "…delete") is
+#   approved at once (option "Yes"), and logged with the command it was about.
+# - A question dialog (Claude's AskUserQuestion) is left alone. When one has waited longer than
+#   QUESTION_WAIT seconds, the script prints it and exits, so the orchestrator can look at it.
+# - Exits after [hours] (default 8) as a heartbeat.
+# Log: /workspaces/dev-dots/work/worker-watch.log
+set -uo pipefail
+HOURS=${1:-8}; QUESTION_WAIT=${QUESTION_WAIT:-600}; POLL=${POLL:-15}
+LOG=/workspaces/dev-dots/work/worker-watch.log
+SELF=${TMUX_PANE:-none}
+declare -A since last lastt
+end=$(( $(date +%s) + HOURS*3600 ))
+log() { echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
+log "watch start (${HOURS}h, question wait ${QUESTION_WAIT}s)"
+
+while [ "$(date +%s)" -lt "$end" ]; do
+  while IFS=' ' read -r pid name; do
+    [ "$pid" = "$SELF" ] && continue
+    s=$(tmux capture-pane -p -t "$pid" 2>/dev/null) || continue
+    if echo "$s" | grep -qE 'Do you want to (proceed|make this edit|create|delete|overwrite|allow)'; then
+      if echo "$s" | grep -qE '❯ *1\. *Yes'; then
+        what=$(echo "$s" | grep -B12 -E 'Do you want to' | grep -v -E '^\s*$|─' | tail -8 | head -6 | sed 's/^ *//' | tr '\n' ' ' | cut -c1-240)
+        now=$(date +%s)
+        if [ "${last[$pid]:-}" = "$what" ] && (( now - ${lastt[$pid]:-0} < 60 )); then sleep 1; continue; fi
+        last[$pid]=$what; lastt[$pid]=$now
+        tmux send-keys -t "$pid" Enter
+        log "approved in $name: $what"
+        sleep 2; continue
+      fi
+    fi
+    if echo "$s" | grep -qE 'Enter to select'; then
+      now=$(date +%s); since[$pid]=${since[$pid]:-$now}
+      if (( now - ${since[$pid]} >= QUESTION_WAIT )); then
+        log "question waiting in $name for $(( (now - ${since[$pid]})/60 )) min"
+        echo "=== QUESTION in $name ($pid) ==="
+        echo "$s" | grep -v '^\s*$' | tail -25
+        exit 3
+      fi
+    else
+      unset "since[$pid]"
+    fi
+  done < <(tmux list-panes -a -F '#{pane_id} #{window_name}')
+  sleep "$POLL"
+done
+log "watch end (heartbeat after ${HOURS}h)"
