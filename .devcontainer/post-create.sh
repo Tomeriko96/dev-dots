@@ -135,8 +135,11 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
   "skipDangerousModePermissionPrompt": true,
   "permissions": {
     "defaultMode": "bypassPermissions",
+    "additionalDirectories": ["/workspaces", "/tmp", "/home/dev"],
     "allow": [
       "Bash",
+      "Bash(rm:*)",
+      "Bash(rm -rf:*)",
       "Edit",
       "Write",
       "Read",
@@ -173,6 +176,7 @@ if [ -f "$CLAUDE_SETTINGS" ]; then
       hooks: (($existing.hooks // {}) + $new.hooks),
       permissions: (($existing.permissions // {}) + {
         defaultMode: $new.permissions.defaultMode,
+        additionalDirectories: (($existing.permissions.additionalDirectories // []) + ($new.permissions.additionalDirectories // []) | unique),
         allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique),
         deny:  (($existing.permissions.deny  // []) + ($new.permissions.deny  // []) | unique)
       })
