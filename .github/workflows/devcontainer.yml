@@ -92,9 +92,28 @@ jobs:
               && echo "[OK]      Claude .env hook installed" \
               || { echo "[FAIL] Claude .env hook missing"; failed=1; }
 
+            dups=$(echo "$PATH" | tr ":" "\n" | sort | uniq -d)
+            test -z "$dups" && echo "[OK]      no duplicate PATH entries" \
+              || { echo "[FAIL] duplicate PATH entries: $dups"; failed=1; }
+            case ":$PATH:" in
+              *":$HOME/.devcontainers/bin:"*) echo "[FAIL] ~/.devcontainers/bin in PATH"; failed=1 ;;
+              *) echo "[OK]      ~/.devcontainers/bin not in PATH" ;;
+            esac
+            [[ $HISTSIZE -ge 50000 && $HISTFILESIZE -ge 50000 && "${PROMPT_COMMAND[*]}" == *"history -a"* \
+               && "${PROMPT_COMMAND[*]}" == *starship* ]] \
+              && echo "[OK]      history: size $HISTSIZE/$HISTFILESIZE, history -a in PROMPT_COMMAND" \
+              || { echo "[FAIL] history settings: $HISTSIZE/$HISTFILESIZE, PROMPT_COMMAND=${PROMPT_COMMAND[*]}"; failed=1; }
+
             claude --version; opencode --version; entire version | head -n1
             exit "$failed"
           '
+
+      - name: Init process
+        run: |
+          # "init": true in devcontainer.json puts an init (docker-init/tini/catatonit) at PID 1
+          pid1=$(devcontainer exec --workspace-folder . cat /proc/1/comm)
+          echo "PID 1: $pid1"
+          case "$pid1" in docker-init|tini|catatonit) ;; *) echo "::error::no init process at PID 1"; exit 1 ;; esac
 
       - name: Summary
         if: always()
