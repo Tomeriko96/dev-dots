@@ -54,11 +54,12 @@ is_ceda_repo() {
 # Klopt de instelling én staan de hooks erin?
 is_set_up() {
   local dir="$1" settings hooks
-  settings="$dir/.entire/settings.json"
-  [[ -f "$settings" ]] || return 1
-  grep -q '"enabled": *true' "$settings" || return 1
-  grep -q '"git-branch"' "$settings" || return 1
-  grep -q 'cedanl/entire-checkpoints' "$settings" || return 1
+  # Lokale instellingen gaan voor op de gedeelde; lees ze beide, de lokale wint.
+  settings="$(cat "$dir/.entire/settings.json" "$dir/.entire/settings.local.json" 2>/dev/null)"
+  [[ -n "$settings" ]] || return 1
+  grep -q '"enabled": *true' <<<"$settings" || return 1
+  [[ "$(grep -oE '"git-(branch|refs)"' <<<"$settings" | tail -1)" == '"git-branch"' ]] || return 1
+  grep -q 'cedanl/entire-checkpoints' <<<"$settings" || return 1
   hooks="$(git -C "$dir" rev-parse --git-path hooks 2>/dev/null)" || return 1
   [[ "$hooks" = /* ]] || hooks="$dir/$hooks"
   grep -qs 'entire' "$hooks/post-commit" || return 1
@@ -130,7 +131,10 @@ setup_repo() {
 
   out="$(cd "$dir" && entire enable -y --agent "$AGENT" 2>&1)"; rc=$?
   if ((rc != 0)); then report fail "$name" "entire enable mislukt: $(echo "$out" | first_line)"; return 0; fi
-  out="$(cd "$dir" && entire configure --checkpoint-backend "$BACKEND" --checkpoint-remote "$CHECKPOINT_REMOTE" 2>&1)"; rc=$?
+  # Staat .entire/settings.json in git (zoals in dair-agentic-coding), pas dan alleen de lokale kopie aan.
+  local scope=()
+  git -C "$dir" ls-files --error-unmatch .entire/settings.json >/dev/null 2>&1 && scope=(--local)
+  out="$(cd "$dir" && entire configure "${scope[@]}" --checkpoint-backend "$BACKEND" --checkpoint-remote "$CHECKPOINT_REMOTE" 2>&1)"; rc=$?
   if ((rc != 0)); then report fail "$name" "entire configure mislukt: $(echo "$out" | first_line)"; return 0; fi
   keep_local "$dir"
   if is_set_up "$dir"; then privacy_notice "$dir"; report fixed "$name" "aangezet"; else report fail "$name" "na het aanzetten klopt het nog niet (zie: cd $dir && entire status)"; fi
