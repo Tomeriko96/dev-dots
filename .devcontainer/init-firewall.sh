@@ -40,8 +40,8 @@ CORE_DOMAINS=(
   raw.githubusercontent.com objects.githubusercontent.com codeload.github.com api.githubcopilot.com
   # Package registries
   registry.npmjs.org pypi.org files.pythonhosted.org
-  # GitLab (gitlab.com and SURF)
-  gitlab.com git.ia.surf.nl
+  # GitLab (gitlab.com and SURF; SURF moved to git.sdp.surf.nl on 2026-11-16, git.ia.surf.nl holds archived projects)
+  gitlab.com git.sdp.surf.nl git.ia.surf.nl
   # Tooling
   opencode.ai entire.io
 )

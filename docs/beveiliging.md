@@ -22,7 +22,7 @@ De variant voegt `--cap-add=NET_ADMIN --cap-add=NET_RAW` toe en draait bij elke 
 
 **Wat is toegestaan**
 
-- GitHub (via de gepubliceerde IP-bereiken van `api.github.com/meta`), Anthropic, npm, PyPI, `gitlab.com`, `git.ia.surf.nl`, OpenCode en Entire (zie `CORE_DOMAINS` in `.devcontainer/init-firewall.sh`)
+- GitHub (via de gepubliceerde IP-bereiken van `api.github.com/meta`), Anthropic, npm, PyPI, `gitlab.com`, `git.sdp.surf.nl` (SURF GitLab), `git.ia.surf.nl` (oude SURF GitLab, gearchiveerd), OpenCode en Entire (zie `CORE_DOMAINS` in `.devcontainer/init-firewall.sh`)
 - DNS naar de resolvers uit `/etc/resolv.conf`, loopback en antwoorden op inkomende verbindingen (forwarded ports)
 - IPv6 naar buiten is geblokkeerd
 
