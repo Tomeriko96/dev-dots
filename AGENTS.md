@@ -13,7 +13,7 @@ onboard
 ```
 
 This authenticates:
-1. **GitHub CLI** (`gh auth login`) — enables git operations on github.com and `gh` commands
+1. **GitHub CLI** (`gh auth login`) — enables git operations on github.com and `gh` commands; then sets an empty global git `user.name`/`user.email` from the gh login (noreply address), never overwriting an existing value
 2. **GitLab CLI** (`glab auth login --hostname git.sdp.surf.nl`) — enables git operations on SURF GitLab and `glab` commands
 3. **OpenCode** (`opencode auth login`) — enables GitHub Copilot in OpenCode
 4. **Claude Code** (`claude auth login`) — enables Claude Code CLI (subscription-based)

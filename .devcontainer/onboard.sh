@@ -5,7 +5,9 @@
 # Guides you through the four authentication steps needed after each fresh
 # container build:
 #
-#   1. gh auth login       — GitHub CLI + git over HTTPS (github.com)
+#   1. gh auth login       — GitHub CLI + git over HTTPS (github.com);
+#                            afterwards sets an empty git user.name/user.email
+#                            from the gh login (noreply address)
 #   2. glab auth login     — GitLab CLI + git over HTTPS (git.sdp.surf.nl)
 #   3. opencode auth login — GitHub Copilot in OpenCode
 #   4. claude auth login   — Claude Code CLI authentication
@@ -220,6 +222,42 @@ run_claude_auth() {
   return $rc
 }
 
+# Sets git user.name / user.email (global) from the gh login, each only when
+# it is still empty; an existing value is never overwritten. The email is the
+# GitHub noreply form <id>+<login>@users.noreply.github.com. Without a gh
+# login, or when the API gives nothing back, it prints a note and returns 0.
+_set_git_identity() {
+  local name email login id
+  name="$(git config --global --get user.name 2>/dev/null || true)"
+  email="$(git config --global --get user.email 2>/dev/null || true)"
+
+  if [[ -n "$name" && -n "$email" ]]; then
+    _done "git identity already set: $name <$email>"
+    return 0
+  fi
+
+  if ! _gh_authed; then
+    _skip "git identity: gh is not authenticated — set it with: git config --global user.name/user.email"
+    return 0
+  fi
+
+  login="$(gh api user -q .login 2>/dev/null || true)"
+  id="$(gh api user -q .id 2>/dev/null || true)"
+  if [[ -z "$login" || -z "$id" ]]; then
+    _skip "git identity: could not read the GitHub user via 'gh api user'"
+    return 0
+  fi
+
+  if [[ -z "$name" ]]; then
+    git config --global user.name "$login" && _done "git user.name set to $login"
+  fi
+  if [[ -z "$email" ]]; then
+    email="${id}+${login}@users.noreply.github.com"
+    git config --global user.email "$email" && _done "git user.email set to $email"
+  fi
+  return 0
+}
+
 # ── summary ───────────────────────────────────────────────────────────────────
 
 _claude_authed() {
@@ -284,6 +322,7 @@ main() {
 
     # Step 1
     run_gh_auth || true
+    _set_git_identity || true
 
     # Step 2
     run_glab_auth || true
@@ -305,4 +344,7 @@ main() {
   fi
 }
 
-main "$@"
+# Run only when executed, not when sourced (test-onboard-identity.sh sources it).
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

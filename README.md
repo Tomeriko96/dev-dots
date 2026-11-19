@@ -65,7 +65,7 @@ Defined in `.devcontainer/post-create.sh`:
 
 Run `onboard` for a guided login. It walks through the CLIs below:
 
-- `gh auth login` — GitHub CLI, and git over HTTPS for github.com
+- `gh auth login` — GitHub CLI, and git over HTTPS for github.com; afterwards an empty global git `user.name` / `user.email` is filled from the gh login (`<id>+<login>@users.noreply.github.com`); existing values are kept
 - `glab auth login --hostname git.sdp.surf.nl` — GitLab CLI, and git over HTTPS for the SURF GitLab
 - `opencode auth login` — GitHub Copilot in OpenCode
 - `claude auth login` — Claude Code

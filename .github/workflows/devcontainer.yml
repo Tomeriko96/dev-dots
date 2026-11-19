@@ -108,12 +108,13 @@ jobs:
             exit "$failed"
           '
 
-      - name: Init process
+      - name: Init process and onboard git identity
         run: |
           # "init": true in devcontainer.json puts an init (docker-init/tini/catatonit) at PID 1
           pid1=$(devcontainer exec --workspace-folder . cat /proc/1/comm)
           echo "PID 1: $pid1"
           case "$pid1" in docker-init|tini|catatonit) ;; *) echo "::error::no init process at PID 1"; exit 1 ;; esac
+          devcontainer exec --workspace-folder . bash .devcontainer/test-onboard-identity.sh
 
       - name: Summary
         if: always()
