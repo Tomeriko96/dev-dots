@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# worker-send <window> <text> — deliver one message to a worker's Claude prompt, reliably.
+# - Refuses text that names ".env" (the block-env-read hook stops the whole command; say
+#   "dotenv files").
+# - Clears whatever sits in the prompt first (C-u), but stops when that is not-dimmed text:
+#   that may be the user typing through remote control. Dimmed text is Claude's suggestion.
+# - Sends the text, then presses Enter again until the prompt is empty: long text arrives as
+#   "[Pasted text]" and needs a second Enter, and a busy worker queues it.
+# Exit 0 = delivered (prompt empty), 1 = refused, 2 = still in the prompt after the retries.
+set -uo pipefail
+[ $# -ge 2 ] || { echo "usage: worker-send <window> <text…>" >&2; exit 1; }
+W=$1; shift; TEXT="$*"
+case "$TEXT" in *.env*) echo "refused: the text names a dotenv file; write \"dotenv files\"" >&2; exit 1;; esac
+tmux has-session -t "$W" 2>/dev/null || { echo "no tmux window $W" >&2; exit 1; }
+
+# the prompt line: "❯ " after the last horizontal rule; dimmed = ESC[2m right after the arrow
+prompt_line() { tmux capture-pane -e -p -t "$W" | grep -a '❯' | tail -1; }
+prompt_text() { tmux capture-pane -p -t "$W" | grep -a '❯' | tail -1 | sed 's/^.*❯[[:space:]]*//; s/[[:space:]]*$//'; }
+
+cur=$(prompt_text)
+if [ -n "$cur" ] && ! prompt_line | grep -qa $'❯\xc2\xa0\e\[2m\|❯ \e\[2m'; then
+  echo "refused: the prompt holds typed text (maybe the user on remote control): $cur" >&2; exit 1
+fi
+tmux send-keys -t "$W" C-u
+tmux send-keys -t "$W" -l "$TEXT"
+tmux send-keys -t "$W" Enter
+for i in 1 2 3 4 5; do
+  read -t 2 < /dev/zero
+  now=$(prompt_text)
+  if [ -z "$now" ] || prompt_line | grep -qa $'\e\[2m'; then echo "delivered to $W"; exit 0; fi
+  tmux send-keys -t "$W" Enter
+done
+echo "still in the prompt of $W: $(prompt_text | cut -c1-80)" >&2; exit 2
