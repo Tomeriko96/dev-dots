@@ -165,7 +165,14 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
     ],
     "deny": [
       "Read(**/.env)",
-      "Read(**/.env.*)"
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.production)",
+      "Read(**/.env.development)",
+      "Read(**/.env.test)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.dev)"
     ]
   }
 }

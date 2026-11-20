@@ -50,7 +50,7 @@ case $op in
     [ -f "$F" ] || { echo "no $F: run worker-brief write first" >&2; exit 1; }
     printf '\n- %s: %s\n' "$(date '+%F %H:%M')" "${text[*]}" | fold -s -w 100 >> "$F"
     echo "added to $F"
-    [ -z "$win" ] || "$ROOT/scripts/worker-send" "$win" "Orchestrator: CLAUDE.local.md has a new update under \"Updates\"; read it and follow it from now on. Reply in one line.";;
+    [ -z "$win" ] || "$ROOT/scripts/worker-send" "$win" "Orchestrator, standing update (also saved under Updates in CLAUDE.local.md): ${text[*]} Reply in one line.";;
   kind)
     sed -n 's/^<!-- worker-brief kind: \([a-z]*\);.*/\1/p' "$F" 2>/dev/null | head -1 | grep . || echo none;;
   *) echo "usage: worker-brief write|add|kind <dir> …" >&2; exit 1;;
