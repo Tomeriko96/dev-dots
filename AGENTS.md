@@ -276,6 +276,11 @@ pauses, decisions waiting on the user, `--resume` ids of closed workers, things 
 Update it on every change and read it first after a compaction: the conversation summary is not
 the source of truth.
 
+**Merge conflicts: always through the factory** (the user's rule). Never resolve a conflict by
+hand in this session. An MR of a factory job: the worker runs `/factory sync`. An MR made outside
+the factory: the worker adopts it first (`/factory adopt <nr>`, factory ≥ v0.12.0), then syncs.
+Renovate MRs: tick their rebase checkbox.
+
 **Auto-merge by hand.** Switch on a forge's auto-merge yourself only when the repo's delivery row
 allows it and the job's `.factory/jobs/<id>/precheck.md` says `AUTO-MERGE: yes`. When the factory
 held it (`AUTO-MERGE: no: …`), read the reason in `precheck.md`/`decision.md` and leave the merge to
