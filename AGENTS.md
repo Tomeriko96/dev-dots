@@ -181,6 +181,11 @@ jobs bundle them by area, not by count. In the user's own repos set
 scoped findings share one job, one PR and one CI run; what bounds a bundle is that its issues touch
 the same area (one review, one revert), not a small number. Keep separate what touches unrelated
 modules, or what one risky issue could hold back (auth, schema, dependencies: `factory:solo`).
+On the forge, group them with a **bundle issue** (factory ≥ v0.10.0): an issue by the user labelled
+`factory:bundle` whose description has one `- [ ] #N` line per member, with each member also linked
+(GitLab issue link `relates_to`; GitHub sub-issue). The factory makes it one job, skips the members
+on their own, and the MR closes the bundle and all members. Brief for creating them:
+`work/bundle-brief.md`.
 
 **External audits** (an audit the user pastes or sends, e.g. a live run on the test environment):
 save it in `work/audits/<repo>/<YYYY-MM-DD>/`, start a worker in its own clone with "verify each
