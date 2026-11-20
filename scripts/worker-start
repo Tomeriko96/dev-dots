@@ -38,8 +38,13 @@ for _ in $(seq 1 60); do
 done
 [ $started = 1 ] || { echo "claude did not start in $W; nothing else was typed" >&2; pane | tail -8 >&2; exit 1; }
 
-send '/remote-control'; sleep 5
-url=$(pane | grep -o 'https://claude.ai/code/session_[A-Za-z0-9]*' | tail -1 || true)
+url=""
+for _ in 1 2 3; do                            # Claude may still be loading: retry until it is on
+  send '/remote-control'; sleep 5
+  url=$(pane | grep -o 'https://claude.ai/code/session_[A-Za-z0-9]*' | tail -1 || true)
+  [ -n "$url" ] && break
+  pane | grep -q '/rc active' && break
+done
 send "$BRIEF"
 [ -f "$CLONE/.factory/config.json" ] || send '/factory setup'
 [ -z "$CMD" ] || send "$CMD"
