@@ -1,0 +1,36 @@
+name: tests
+
+# Fast unit tests for the bash helpers (no image build).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "bash/**"
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "bash/**"
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: entire-local-hooks.py
+        run: python3 -m unittest discover -s tests -v

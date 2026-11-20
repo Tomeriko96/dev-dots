@@ -97,4 +97,4 @@ npx --yes skills add cedanl/.github --skill '*' -a claude-code -a opencode -a pi
 - CLI tool versions are pinned in `.devcontainer/mise.toml` / `mise.lock` (rebuild needed after a change). `mise` itself is pinned in the `Dockerfile`.
 - First build takes 5–10 minutes; subsequent builds are cached
 - Container runs on Debian Bookworm; your host (Fedora Atomic Sway) is separate
-- Credentials in `.env` are not readable by Claude via hook (`block-env-read.sh`)
+- Credentials in `.env` / `.env.<suffix>` are blocked for Claude's Read, Grep and Bash tools via hook (`block-env-read.sh`); best-effort denylist, not a sandbox (`.env.example` and `.env.sample` stay readable)

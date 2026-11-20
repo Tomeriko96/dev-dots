@@ -2,6 +2,7 @@ name: devcontainer
 
 # Builds the full devcontainer image and runs its lifecycle (post-create and
 # post-start) with the devcontainer CLI, then checks that every tool runs.
+# A separate fast job tests the Claude settings merge from post-create.
 # The image is not pushed anywhere.
 
 on:
@@ -32,6 +33,17 @@ env:
   DEVCONTAINER_CLI_VERSION: "0.90.0"
 
 jobs:
+  merge-settings:
+    name: Claude settings merge
+    # Fast check of post-create's settings merge; needs only jq, not the image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test merge-claude-settings.jq
+        run: bash .devcontainer/test-merge-settings.sh
+
   build:
     name: Build and smoke-test
     # mise.lock only covers Linux x86_64
@@ -115,6 +127,10 @@ jobs:
           echo "PID 1: $pid1"
           case "$pid1" in docker-init|tini|catatonit) ;; *) echo "::error::no init process at PID 1"; exit 1 ;; esac
           devcontainer exec --workspace-folder . bash .devcontainer/test-onboard-identity.sh
+
+      - name: Shell tests (cd/zoxide)
+        # bash -ic for the same PATH as an interactive shell (uv, starship).
+        run: devcontainer exec --workspace-folder . bash -ic 'bash bash/tests/test-cd.sh'
 
       - name: Summary
         if: always()

@@ -1,0 +1,30 @@
+name: env-hook
+
+# Fast check of the Claude .env hook: runs its test script on the runner,
+# without building the devcontainer image.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".devcontainer/hooks/**"
+      - ".github/workflows/env-hook.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".devcontainer/hooks/**"
+      - ".github/workflows/env-hook.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test block-env-read.sh
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run hook tests
+        run: bash .devcontainer/hooks/test-block-env-read.sh

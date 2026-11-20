@@ -3,3 +3,6 @@ tool-versions.txt
 
 # Claude Code local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Python bytecode from running the tests
+__pycache__/

@@ -104,14 +104,18 @@ echo "==========================================================================
 CLAUDE_DIR="$HOME/.claude"
 CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
 CLAUDE_HOOKS_DIR="$CLAUDE_DIR/hooks"
-REPO_HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hooks"
+REPO_DEVCONTAINER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_HOOKS_DIR="$REPO_DEVCONTAINER_DIR/hooks"
 
 mkdir -p "$CLAUDE_HOOKS_DIR"
 
 # Install hook scripts
 if [ -d "$REPO_HOOKS_DIR" ]; then
-  cp "$REPO_HOOKS_DIR"/*.sh "$CLAUDE_HOOKS_DIR/" 2>/dev/null && \
-    chmod +x "$CLAUDE_HOOKS_DIR"/*.sh
+  # test-*.sh are repo-only test scripts, not hooks
+  for hook in "$REPO_HOOKS_DIR"/*.sh; do
+    case "$(basename "$hook")" in test-*) continue ;; esac
+    cp "$hook" "$CLAUDE_HOOKS_DIR/" && chmod +x "$CLAUDE_HOOKS_DIR/$(basename "$hook")"
+  done
   echo "[OK] Hooks installed to $CLAUDE_HOOKS_DIR"
 fi
 
@@ -121,7 +125,7 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Bash",
+        "matcher": "Read|Bash|Grep",
         "hooks": [
           {
             "type": "command",
@@ -154,15 +158,9 @@ JSONEOF
 
 # Merge into existing settings (preserves user preferences like model/theme)
 if [ -f "$CLAUDE_SETTINGS" ]; then
-  MERGED=$(jq -n --argjson existing "$(cat "$CLAUDE_SETTINGS")" --argjson new "$CONTAINER_SETTINGS" '
-    $existing + {
-      hooks: (($existing.hooks // {}) + $new.hooks),
-      permissions: {
-        allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique),
-        deny:  (($existing.permissions.deny  // []) + ($new.permissions.deny  // []) | unique)
-      }
-    }
-  ')
+  # Hooks are merged per event, so the user's own hooks survive (see the .jq file)
+  MERGED=$(jq -n --argjson existing "$(cat "$CLAUDE_SETTINGS")" --argjson new "$CONTAINER_SETTINGS" \
+    -f "$REPO_DEVCONTAINER_DIR/merge-claude-settings.jq")
   echo "$MERGED" > "$CLAUDE_SETTINGS"
 else
   echo "$CONTAINER_SETTINGS" > "$CLAUDE_SETTINGS"

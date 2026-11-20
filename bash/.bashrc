@@ -114,9 +114,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Use zoxide with bash
-eval "$(zoxide init bash)"
-
 # Load bash helpers
 source ~/.config/bash/rc
 
@@ -140,3 +137,8 @@ eval "$(uv generate-shell-completion bash)"
 # or every nested shell (tmux, bash -i) duplicates the entries. The vendor
 # blocks that get appended below this file at image build (micromamba,
 # OpenCode) still prepend; the last Dockerfile step appends a PATH dedupe line.
+
+# Use zoxide with bash. Keep this last: starship moves an existing
+# PROMPT_COMMAND into STARSHIP_PROMPT_COMMAND, so zoxide must append its hook
+# after starship (starship_precmd stays first and reads $? correctly).
+eval "$(zoxide init bash)"
