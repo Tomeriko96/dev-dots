@@ -117,6 +117,8 @@ From `bash/` and `starship/`:
 │       └── rc
 ├── starship/
 │   └── .config/starship.toml
+├── tests/
+│   └── test_entire_local_hooks.py
 ├── AGENTS.md
 ├── CLAUDE.md
 └── README.md
