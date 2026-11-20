@@ -48,6 +48,14 @@ for arg in "$@"; do
     echo "refused: $p"; printf '  - %s\n' "${out[@]}"; rc=1; continue
   fi
   if (( dry )); then echo "ok (dry run): $p${wt:+ and $wt}"; continue; fi
+  # keep what the factory learned about this repo (repo.md, config, metrics, backlog): it is
+  # git-excluded, so it would vanish with the clone; a new clone restores it (AGENTS.md 3)
+  if [ -d "$p/.factory" ]; then
+    keep=/workspaces/dev-dots/work/factory-state/$(basename "$p"); mkdir -p "$keep"
+    for f in repo.md config.json metrics.jsonl backlog.md; do [ -f "$p/.factory/$f" ] && cp -p "$p/.factory/$f" "$keep/"; done
+    [ -f "$p/CLAUDE.local.md" ] && cp -p "$p/CLAUDE.local.md" "$keep/"
+    echo "kept factory state: $keep"
+  fi
   rm -rf -- "$p"; [ -d "$wt" ] && rm -rf -- "$wt"
   echo "removed: $p"
 done

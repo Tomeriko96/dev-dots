@@ -83,7 +83,9 @@ Check, and fix what you can yourself, so a builder does not hit it halfway:
 - A fork gets an `upstream` remote: run `gh repo set-default <owner>/<repo>` so PRs go to the
   fork, not the parent.
 - Factory missing: `/workspaces/dev-dots/factory-template/install --no-setup` from inside the
-  clone. Not `factory-init`: it ends with `exec claude`, which skips the `claude()` function.
+  clone. When `work/factory-state/<repo>/` exists (kept by `work-rm`), copy its `repo.md`,
+  `config.json`, `backlog.md` and `metrics.jsonl` into the new clone's `.factory/` first: the
+  repo notes workers learned (e.g. "never `git stash`", which tests need which env) survive. Not `factory-init`: it ends with `exec claude`, which skips the `claude()` function.
   The factory puts its worktrees next to the clone, in `work/<repo>-worktrees/` (ignored).
 
 ### 4. Start the worker and the factory, in one go
@@ -312,6 +314,13 @@ Outages hit every worker at once; handle them here, not per worker:
   new session in `work/orchestrator.md` until one finishes); a session's headless browser and test suites go through
   `.factory/heavy`; only one session per repo runs the app (onderwijsdata-chat's ports are fixed).
   Above a load of 2× the cores, start no new jobs or sessions.
+
+### 9. Learn while monitoring
+While watching workers, note every incident and correction (a worker going wrong, the user stepping
+in, a wrong claim) in `work/lessons.md` with the fix it needs: in this file (orchestrator), in the
+briefs (`worker-brief`), in factory-template (a guard, a prompt, a test) or in a skill. Make the
+fix the same day where it is mechanical (a guard or test beats a sentence), and tell the user in
+one line per lesson.
 
 Entire only switches on for origins under GitHub `cedanl/` and GitLab `surf-internal/npuls/ceda/`
 (see `_entire_auto_enable`); personal repos (`Tomeriko96/*`) get no checkpoints.
