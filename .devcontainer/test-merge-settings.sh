@@ -115,6 +115,38 @@ else
   fail "5: missing hooks key gets the container hooks"; jq . "$TMP/out5.json"
 fi
 
+# 6. Permissions: existing keys kept, bypass mode and working directories set,
+#    the old broad dotenv rule replaced by the narrowed list
+E=.env   # keeps the literal file name out of command lines
+jq -n --arg broad "Read(**/$E.*)" --arg local "Read(**/$E.local)" '{
+  permissions: { ask: ["Bash(git push:*)"], defaultMode: "default",
+                 additionalDirectories: ["/srv"], deny: [$broad, "Read(./secret)"] } }' > "$TMP/existing6.json"
+jq -n --arg dotenv "Read(**/$E)" --arg local "Read(**/$E.local)" '{
+  skipDangerousModePermissionPrompt: true,
+  permissions: { defaultMode: "bypassPermissions", additionalDirectories: ["/tmp", "/srv"],
+                 allow: ["Bash"], deny: [$dotenv, $local] } }' > "$TMP/new6.json"
+merge "$TMP/existing6.json" "$TMP/new6.json" "$TMP/out6.json"
+check "6: ask kept" '.permissions.ask == ["Bash(git push:*)"]' "$TMP/out6.json"
+check "6: defaultMode set to bypassPermissions" '.permissions.defaultMode == "bypassPermissions"' "$TMP/out6.json"
+check "6: skipDangerousModePermissionPrompt set" '.skipDangerousModePermissionPrompt == true' "$TMP/out6.json"
+check "6: additionalDirectories merged" '.permissions.additionalDirectories == ["/srv", "/tmp"]' "$TMP/out6.json"
+if jq -e --arg broad "Read(**/$E.*)" --arg dotenv "Read(**/$E)" --arg local "Read(**/$E.local)" \
+    '.permissions.deny == ([$dotenv, $local, "Read(./secret)"] | unique)' "$TMP/out6.json" >/dev/null; then
+  pass "6: broad dotenv rule replaced, own deny rule kept"
+else
+  fail "6: broad dotenv rule replaced, own deny rule kept"; jq . "$TMP/out6.json"
+fi
+merge "$TMP/out6.json" "$TMP/new6.json" "$TMP/out6b.json"
+if cmp -s "$TMP/out6.json" "$TMP/out6b.json"; then
+  pass "6: second merge is byte-identical"
+else
+  fail "6: second merge is byte-identical"; diff "$TMP/out6.json" "$TMP/out6b.json" || true
+fi
+
+# 7. Without defaultMode in $new the user's own mode stays
+merge "$TMP/existing6.json" "$TMP/new.json" "$TMP/out7.json"
+check "7: own defaultMode kept" '.permissions.defaultMode == "default" and (has("skipDangerousModePermissionPrompt") | not)' "$TMP/out7.json"
+
 if [ "$failed" -ne 0 ]; then
   echo "merge-claude-settings: tests FAILED"
   exit 1

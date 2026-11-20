@@ -3,8 +3,10 @@
 #
 # Hooks are merged per event: a group in $existing counts as ours (and is
 # replaced) when any of its hook commands also appears in a $new group of the
-# same event. Other groups and events are kept. Running it twice on its own
-# output gives the same JSON.
+# same event. Other groups and events are kept. Permissions keep every
+# existing key (ask, defaultMode, ...); allow, deny and additionalDirectories
+# are unions; defaultMode and skipDangerousModePermissionPrompt are set when
+# $new sets them. Running it twice on its own output gives the same JSON.
 
 def commands: [.hooks[]?.command];
 def dedupe: reduce .[] as $g ([]; if any(.[]; . == $g) then . else . + [$g] end);
@@ -21,8 +23,15 @@ $existing + {
           )
       )
   ),
-  permissions: {
+  permissions: (($existing.permissions // {}) + {
     allow: (($existing.permissions.allow // []) + ($new.permissions.allow // []) | unique),
-    deny:  (($existing.permissions.deny  // []) + ($new.permissions.deny  // []) | unique)
+    # Read(**/.env.*) was the container's earlier, broader rule; it also hid
+    # .env.example, so the narrowed list from post-create.sh replaces it.
+    deny:  ((($existing.permissions.deny // []) - ["Read(**/.env.*)"]) + ($new.permissions.deny // []) | unique)
   }
+  # bypass mode and the extra working directories, when the container sets them (post-create.sh)
+  + (if $new.permissions.defaultMode then {defaultMode: $new.permissions.defaultMode} else {} end)
+  + (if $new.permissions.additionalDirectories then {additionalDirectories:
+      (($existing.permissions.additionalDirectories // []) + $new.permissions.additionalDirectories | unique)} else {} end))
 }
++ (if $new.skipDangerousModePermissionPrompt then {skipDangerousModePermissionPrompt: true} else {} end)
