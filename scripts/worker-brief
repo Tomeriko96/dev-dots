@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# worker-brief — a worker's standing agreements live in CLAUDE.local.md in its clone, not in chat:
+# Claude Code loads that file at start and again after every compaction, so nothing the
+# orchestrator agreed with the worker gets lost in a summary. The file is excluded from git
+# (.git/info/exclude), so it never ends up in a commit.
+#
+#   worker-brief write <dir in work/> [build|audit|light] [note…]
+#       (re)write the file: the matching brief from AGENTS.md ("> Working agreements",
+#       "> Audit agreements", "> Light agreements") plus one repo note per extra argument.
+#   worker-brief add <dir in work/> <text…> [--send <window>]
+#       append a dated update; with --send, tell the worker (worker-send) to re-read the file.
+#   worker-brief kind <dir in work/>       print build|audit|light|none
+set -euo pipefail
+ROOT=/workspaces/dev-dots
+op=${1:?write|add|kind}; D=${2:?dir in work/}; shift 2
+CLONE=$ROOT/work/$D; F=$CLONE/CLAUDE.local.md
+[ -d "$CLONE" ] || { echo "no clone $CLONE" >&2; exit 1; }
+
+exclude() {
+  local ex; ex=$(git -C "$CLONE" rev-parse --git-path info/exclude)
+  case $ex in /*) ;; *) ex=$CLONE/$ex;; esac
+  mkdir -p "$(dirname "$ex")"; grep -qxF '/CLAUDE.local.md' "$ex" 2>/dev/null || echo '/CLAUDE.local.md' >> "$ex"
+}
+
+case $op in
+  write)
+    kind=${1:-build}; shift || true
+    case $kind in build) key='Working agreements';; audit) key='Audit agreements';; light) key='Light agreements';;
+      *) echo "kind must be build|audit|light" >&2; exit 1;; esac
+    brief=$(sed -n "s/^> \\($key.*\\)\$/\\1/p" "$ROOT/AGENTS.md")
+    [ -n "$brief" ] || { echo "no \"$key\" brief in AGENTS.md" >&2; exit 1; }
+    exclude
+    {
+      echo "<!-- worker-brief kind: $kind; written by the dev-dots orchestrator, $(date '+%F %H:%M'). Not committed. -->"
+      echo "# Working agreements for this session"
+      echo
+      echo "You are a worker started by the orchestrator in /workspaces/dev-dots; the user steers you"
+      echo "from a phone through remote control. These agreements are standing: they hold after every"
+      echo "compaction. Messages starting \"From the user:\" are the user's words; \"Orchestrator:\" ones are not."
+      echo
+      echo "$brief" | fold -s -w 100
+      if [ $# -gt 0 ]; then echo; echo "## Repo notes"; for n in "$@"; do echo; echo "- $n" | fold -s -w 100; done; fi
+      echo
+      echo "## Updates"
+    } > "$F"
+    echo "wrote $F ($kind, $# notes)";;
+  add)
+    win=""; text=()
+    while [ $# -gt 0 ]; do case $1 in --send) win=${2:?window}; shift 2;; *) text+=("$1"); shift;; esac; done
+    [ -f "$F" ] || { echo "no $F: run worker-brief write first" >&2; exit 1; }
+    printf '\n- %s: %s\n' "$(date '+%F %H:%M')" "${text[*]}" | fold -s -w 100 >> "$F"
+    echo "added to $F"
+    [ -z "$win" ] || "$ROOT/scripts/worker-send" "$win" "Orchestrator: CLAUDE.local.md has a new update under \"Updates\"; read it and follow it from now on. Reply in one line.";;
+  kind)
+    sed -n 's/^<!-- worker-brief kind: \([a-z]*\);.*/\1/p' "$F" 2>/dev/null | head -1 | grep . || echo none;;
+  *) echo "usage: worker-brief write|add|kind <dir> …" >&2; exit 1;;
+esac

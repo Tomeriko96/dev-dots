@@ -1,23 +1,51 @@
 #!/usr/bin/env bash
-# worker-start <window> <clone dir under work/> <factory command…>
+# worker-start [--audit|--light] [--note <text>]… [--force] <window> <clone dir under work/> [first command…]
 # Opens a tmux window, cd's into the clone, starts `claude` through the interactive shell (so the
 # claude() function enables Entire and bypass mode), accepts the start-up popups, turns on remote
-# control, sends the worker brief from AGENTS.md, runs `/factory setup` when the factory has no
-# config yet, then the factory command. Prints the remote-control URL.
+# control and names the session. The standing agreements go into CLAUDE.local.md in the clone
+# (scripts/worker-brief: build brief by default, --audit or --light), so they survive compaction;
+# every --note becomes a repo note there. Then, for a build worker, `/factory setup` when the
+# factory has no config yet, and the first command. Prints the remote-control URL.
+# Session budget: at most $MAX_UNITS units of worker sessions (an audit session counts 2, a light
+# one 1, a build one 1) and no start above a load of 2x the cores; --force overrides.
 # It stops before typing anything else when Claude did not start, so nothing ends up in bash.
 set -euo pipefail
+ROOT=/workspaces/dev-dots; MAX_UNITS=${MAX_UNITS:-3}
+kind=build; notes=(); force=0
+while [ $# -gt 0 ]; do case $1 in
+  --audit) kind=audit; shift;; --light) kind=light; shift;; --force) force=1; shift;;
+  --note) notes+=("${2:?note text}"); shift 2;; *) break;; esac; done
 W=${1:?window}; D=${2:?dir}; shift 2; CMD="$*"
-ROOT=/workspaces/dev-dots; CLONE=$ROOT/work/$D
-[ -d "$CLONE/.factory" ] || { echo "no factory in $CLONE (run factory-template/install --no-setup)" >&2; exit 1; }
-BRIEF=$(sed -n 's/^> \(Working agreements.*\)$/\1/p' "$ROOT/AGENTS.md")
-[ -n "$BRIEF" ] || { echo "no worker brief in AGENTS.md" >&2; exit 1; }
+CLONE=$ROOT/work/$D
+[ -d "$CLONE" ] || { echo "no clone $CLONE" >&2; exit 1; }
+[ $kind = light ] || [ -d "$CLONE/.factory" ] || { echo "no factory in $CLONE (run factory-template/install --no-setup)" >&2; exit 1; }
+tmux display -p -t "$W" '' >/dev/null 2>&1 && { echo "a tmux window $W already exists" >&2; exit 1; }
+
+# --- session budget
+units=0; list=""
+while IFS=' ' read -r name cwd; do
+  case $cwd in "$ROOT"/work/*) ;; *) continue;; esac
+  d=${cwd#"$ROOT"/work/}; d=${d%%/*}
+  k=$("$ROOT/scripts/worker-brief" kind "$d" 2>/dev/null || echo none)
+  case $k in audit) u=2;; *) u=1;; esac
+  units=$((units + u)); list="$list $name($k)"
+done < <(tmux list-windows -a -F '#{window_name} #{pane_current_path}')
+need=$([ $kind = audit ] && echo 2 || echo 1)
+load=$(cut -d' ' -f1 /proc/loadavg); cores=$(nproc)
+if [ $force = 0 ]; then
+  (( units + need <= MAX_UNITS )) || { echo "session budget: $units of $MAX_UNITS units in use ($list ), $W needs $need; finish one first or pass --force" >&2; exit 2; }
+  awk -v l="$load" -v c="$cores" 'BEGIN{exit !(l <= 2*c)}' || { echo "load $load is above 2x $cores cores; start later or pass --force" >&2; exit 2; }
+fi
+
+"$ROOT/scripts/worker-brief" write "$D" "$kind" ${notes[@]+"${notes[@]}"} >/dev/null
 
 pane() { tmux capture-pane -p -t "$W"; }
 send() { tmux send-keys -t "$W" -l "$1"; sleep 0.6; tmux send-keys -t "$W" Enter; sleep 1.5; }
 
+model=opus; [ $kind = light ] && model=sonnet
 tmux new-window -d -n "$W" -c "$ROOT"
 tmux send-keys -t "$W" "cd $CLONE" Enter; sleep 0.5
-tmux send-keys -t "$W" 'claude --model opus' Enter
+tmux send-keys -t "$W" "claude --model $model" Enter
 
 started=0
 for _ in $(seq 1 60); do
@@ -47,7 +75,8 @@ for _ in 1 2 3; do                            # Claude may still be loading: ret
   [ -n "$url" ] && break
   pane | grep -q '/rc active' && break
 done
-send "$BRIEF"
-[ -f "$CLONE/.factory/config.json" ] || send '/factory setup'
+send "/rename $W"
+send "Orchestrator: your standing working agreements are in CLAUDE.local.md (loaded automatically, also after compaction); follow them. Reply in one line."
+[ $kind != build ] || [ -f "$CLONE/.factory/config.json" ] || send '/factory setup'
 [ -z "$CMD" ] || send "$CMD"
 echo "$W ${url:-<no remote-control url yet>}"

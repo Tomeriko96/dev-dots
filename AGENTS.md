@@ -87,10 +87,16 @@ Check, and fix what you can yourself, so a builder does not hit it halfway:
   The factory puts its worktrees next to the clone, in `work/<repo>-worktrees/` (ignored).
 
 ### 4. Start the worker and the factory, in one go
-**Use `/workspaces/dev-dots/scripts/worker-start <window> <dir in work/> /factory issue <nr>…`.**
-It does all of the below: it only presses Enter on a popup once the cursor is on "Yes", runs
-`/factory setup` when the clone has no factory config yet, and stops before typing anything
-else when Claude did not start (otherwise the commands land in bash). The manual steps:
+**Use `/workspaces/dev-dots/scripts/worker-start [--audit|--light] [--note <row>]… <window> <dir in work/> /factory issue <nr>…`.**
+It writes the standing agreements to `CLAUDE.local.md` in the clone (`scripts/worker-brief`: the
+build brief of 5, `--audit` the audit brief, `--light` the light one; every `--note` becomes a
+repo note there; git-excluded, and Claude Code reloads it after every compaction, so nothing
+agreed gets lost in a summary). It only presses Enter on a popup once the cursor is on "Yes",
+turns on remote control, names the session after the window, runs `/factory setup` when a build
+clone has no factory config yet, and stops before typing anything else when Claude did not start
+(otherwise the commands land in bash). It refuses to start beyond the session budget (8) unless
+`--force`. Later agreements: `scripts/worker-brief add <dir> <text> --send <window>` (appends
+them to the file and tells the worker), not a loose chat message. The manual steps:
 Open a tmux window, `cd` into the clone and type `claude`; the window's interactive shell loads
 the `claude()` function from `bash/.config/bash/functions` (Entire + bypass mode). Not the Agent
 tool: a subagent runs in this session, in dev-dots, without Entire, without the clone's factory
@@ -101,7 +107,7 @@ tmux send-keys -t <repo> 'cd /workspaces/dev-dots/work/<repo>' Enter
 tmux send-keys -t <repo> 'claude --model opus' Enter
 # accept the popups (standing approval below), then without waiting for the user:
 tmux send-keys -t <repo> '/remote-control' Enter
-tmux send-keys -t <repo> '<worker brief, one line>' Enter   # see 5
+# write CLAUDE.local.md first: scripts/worker-brief write <dir> build|audit|light [note…]
 tmux send-keys -t <repo> '/factory setup' Enter             # first run in this clone only
 tmux send-keys -t <repo> '/factory issue <nr> [<nr>…]' Enter # or '/factory next'
 ```
@@ -113,14 +119,23 @@ for the issues the user picked (other people's issues in the repo stay out),
 trust, "allow external imports" for this file, permission prompts) without asking; mention in
 your report what you accepted.
 
-### 5. The worker brief
-Send this as the worker's first message (one line, so `send-keys` sends it as one message):
+### 5. The worker briefs
+`worker-brief` copies one of these lines into the worker's `CLAUDE.local.md` (keep each on one
+line; the script finds them by their first words). Build workers (factory jobs):
 
-> Working agreements for this session (the user steers you from a phone through remote control): deliver the way the repo note's delivery row says (default: a ready-for-review PR, draft false), without asking; in /factory setup ask nothing this brief or the repo note answers, and run the smoke test only on a repo's first setup. Take the recommended option yourself for routine choices (effort, bundling, starting a triage plan, clean-up; an issue that waits on an open PR/MR: leave it and take the next) and say so in one line; ask only content questions (which option to build, design choices, unblocking an issue). Keep questions phone-sized: at most 3 options, recommended first, one line each. After every job state change (PR open, merged, needs-human, failed) post one status line like "#233 → PR #281 open, CI running". When a job reaches PR or merged, run /factory next yourself until it finds nothing, then report once that you are done. Issues stay modular (one defect each), jobs bundle: build small related issues in the same area together (up to the factory's bundle limit) so one branch, one PR and one CI run serve them. After every merge to the base branch, bring your open PRs/MRs up to date (/factory sync): merge or rebase the base, resolve conflicts yourself, push, and switch auto-merge back on where it was; for Renovate MRs in the repo tick their rebase checkbox. After a merge, check CI on the base branch: if it fails, first analyse the cause and whether that check is still needed, then propose a fix; do not fix CI on your own. A CI job that fails on infrastructure (registry quota, runner, network, a missing CI variable) and not on your change is not a rework: say so in one line, retry that pipeline at most once an hour, and do not mark the job failed; when the forge is read-only or down, keep the work committed locally and push once it is back. Close issues and clean up worktrees of finished jobs without asking. When /factory next finds nothing to build, look for new work yourself (discovery): re-check the blockers of your blocked issues (blocker closed or gone: remove the label and say so, or close a stale issue with the reason), run the tests and linters, start the app locally without credentials (its dev/open mode and a local database; never ask for or read secrets or dotenv files) and use it like a user with headless Chromium, also to check your own UI changes (`uv run --no-project --python 3 --with playwright python …`, install it with `uv run --no-project --python 3 --with playwright playwright install chromium` if missing), and check the code against any audit or review markdown in the repo (e.g. `docs/audit*.md`, `AUDIT*.md`, `docs/review*`, `docs/audits/`). Only report real defects you reproduced (a failing command, a wrong output, a broken page, an audit finding that is still true in the code), not style preferences; search open and closed issues first to avoid duplicates. Open at most 5 new issues per night per repo, each with the evidence (command + output or screenshot) and numbered testable acceptance criteria, as the user (gh/glab), then build them with /factory issue <nr>. Never merge yourself; switching on the forge's auto-merge is fine when `delivery.auto_merge` is true.
+> Working agreements for this session (the user steers you from a phone through remote control): deliver the way the repo note's delivery row says (default: a ready-for-review PR, draft false), without asking; in /factory setup ask nothing this brief or the repo note answers, and run the smoke test only on a repo's first setup. Take the recommended option yourself for routine choices (effort, bundling, starting a triage plan, clean-up; an issue that waits on an open PR/MR: leave it and take the next) and say so in one line; ask only content questions (which option to build, design choices, unblocking an issue). Keep questions phone-sized: at most 3 options, recommended first, one line each. After every job state change (PR open, merged, needs-human, failed) post one status line like "#233 → PR #281 open, CI running". When a job reaches PR or merged, run /factory next yourself until it finds nothing, then report once that you are done. Issues stay modular (one defect each), jobs bundle: build small related issues in the same area together (up to the factory's bundle limit) so one branch, one PR and one CI run serve them. After every merge to the base branch, bring your open PRs/MRs up to date (/factory sync): merge or rebase the base, resolve conflicts yourself, push, and switch auto-merge back on only when the sync merged the base without conflicts and the tests pass (after conflicts you resolved, leave auto-merge off and say so: the user merges); for Renovate MRs in the repo tick their rebase checkbox. After a merge, check CI on the base branch: if it fails, first analyse the cause and whether that check is still needed, then propose a fix; do not fix CI on your own. A CI job that fails on infrastructure (registry quota, runner, network, a missing CI variable) and not on your change is not a rework: say so in one line, retry that pipeline at most once an hour, and do not mark the job failed; when the forge is read-only or down, keep the work committed locally and push once it is back. Close issues and clean up worktrees of finished jobs without asking. When /factory next finds nothing to build, look for new work yourself (discovery): re-check the blockers of your blocked issues (blocker closed or gone: remove the label and say so, or close a stale issue with the reason), run the tests and linters, start the app locally without credentials (its dev/open mode and a local database; never ask for or read secrets or dotenv files) and use it like a user with headless Chromium, also to check your own UI changes (`uv run --no-project --python 3 --with playwright python …`, install it with `uv run --no-project --python 3 --with playwright playwright install chromium` if missing), and check the code against any audit or review markdown in the repo (e.g. `docs/audit*.md`, `AUDIT*.md`, `docs/review*`, `docs/audits/`). Only report real defects you reproduced (a failing command, a wrong output, a broken page, an audit finding that is still true in the code), not style preferences; search open and closed issues first to avoid duplicates. Open at most 5 new issues per night per repo, each with the evidence (command + output or screenshot) and numbered testable acceptance criteria, as the user (gh/glab), then build them with /factory issue <nr>. Never merge yourself; switching on the forge's auto-merge is fine when `delivery.auto_merge` is true and the factory's precheck allows it (`AUTO-MERGE: yes`); never switch it on for a job the factory held.
 
-**Repo notes.** Send the repo's rows from "Repo context" below (its delivery row, plus any other
-row naming it) as a second one-line message right after the brief: the worker does not read this
-file. `worker-start` sends the brief; send the note with `worker-send` (6).
+Audit sessions (live audits, no factory jobs of their own):
+
+> Audit agreements for this session (the user steers you from a phone through remote control): you audit, you do not build; there are no factory jobs here. Run the app locally without credentials (see the repo notes; never ask for or read secrets or dotenv files) and drive it with headless Chromium, one subagent per theme on Opus at effort high: one per end-user persona, accessibility (WCAG 2.2 AA), privacy/AVG, security, technical/operational, content/language and the app-specific themes in the repo notes. Run browsers and test suites through `.factory/heavy --priority low` so builders go first. Every report names the date and the full HEAD commit audited. Audit files are never committed (no audit branch, no MR): instructions, reports, screenshots, logs and harnesses go to /workspaces/dev-dots/work/audits/<repo>/<YYYY-MM-DD>/, outside the clone; leave the clone clean. The deliverable is modular issues: one reproduced defect per issue, with the evidence written into the issue (steps, command + output, expected vs actual) and numbered testable acceptance criteria, deduplicated against open and closed issues (and against other audit sessions of this repo), at most 10 per repo per day, filed as the user (gh/glab); the build workers pick them up. Everything not reproduced, or over the limit, stays in the local report. Keep questions phone-sized (at most 3 options, recommended first) and post one line per finished theme like "privacy → 2 issues (#531, #533), 4 low in the report". When the forge is read-only or down, keep issue drafts locally and file them once it is back.
+
+Fun side projects (no factory):
+
+> Light agreements for this session (the user steers you from a phone through remote control): this is a fun side project with no users depending on it; it need not be perfect. Keep every task light: lowest sensible effort, no review rounds, no validation runs, no Playwright or browser gates, no .factory/heavy. When it builds and works, commit and push straight to the default branch yourself, no PR (the user's standing approval for this repo only). Post one line when something is pushed, with the URL if it deploys.
+
+**Repo notes.** Pass the repo's rows from "Repo context" below (its delivery row, plus any other
+row naming it) as `--note` to `worker-start`: the worker does not read this file. For a running
+worker: `worker-brief add <dir> <row> --send <window>`.
 
 ### Repo context
 **The user's own repos.** Personal `Tomeriko96/*` and the GitLab projects they author, plus
@@ -175,9 +190,8 @@ agent plays the LLM through mock scenarios
 
 **Fun side projects** (personal, no users depending on them: e.g. `Tomeriko96/react-tetris`) need
 not be perfect and get **no factory**: no `/factory`, no worker brief, no review rounds, no
-Playwright gates, no heavy slots, no validation runs. Start a plain `claude` session in the clone
-(`worker-start` without a factory command, or `claude --model sonnet`) with the task and "keep it
-light, commit and push straight to the default branch, no PR". That push is the user's standing
+Playwright gates, no heavy slots, no validation runs. Start it with `worker-start --light <window> <dir> <task>` (Sonnet,
+the light brief, no factory). That push is the user's standing
 approval for these repos only.
 
 **Running the apps locally without credentials** (both checked end to end with headless
@@ -229,8 +243,20 @@ Enter until the prompt is empty (long text arrives as "[Pasted text]"; a busy wo
 Start a message with "From the user:" only for the user's own words, and with "Orchestrator:"
 for everything you add; never put your own extras under the user's name.
 
-**Status.** When the user asks, answer with one table: window, job/issue, state, next step (from
-`factory-watch`, `.factory/watch --once` per clone and the pane tails). While workers run
+**Status.** When the user asks, run `scripts/worker-status` (one call: per worker its kind and
+state, jobs, open PRs/MRs with auto-merge and conflicts, last status line; then budget, load and
+heavy slots; `-v` adds the screen tails) and answer with one table: window, job/issue, state,
+next step.
+
+**Orchestrator state.** Keep `work/orchestrator.md` current (sessions and their task, forge
+pauses, decisions waiting on the user, `--resume` ids of closed workers, things to do later).
+Update it on every change and read it first after a compaction: the conversation summary is not
+the source of truth.
+
+**Auto-merge by hand.** Switch on a forge's auto-merge yourself only when the repo's delivery row
+allows it and the job's `.factory/jobs/<id>/precheck.md` says `AUTO-MERGE: yes`. When the factory
+held it (`AUTO-MERGE: no: …`), read the reason in `precheck.md`/`decision.md` and leave the merge to
+the user, with that reason in your report. While workers run
 unattended, send one push notification per real change (an MR opened or merged, a worker stuck on
 a question, an infra outage), never per poll.
 
@@ -264,8 +290,9 @@ Outages hit every worker at once; handle them here, not per worker:
   minutes after the reset, once per limit (`work/worker-watch.resumed`). Many Opus sessions at
   effort high use up the 5-hour limit in a few hours: run builders' reviewers on Sonnet where the
   factory allows it, and keep Opus/high for audits and security.
-- **Machine load** (4 cores, 8 GB; check `/proc/loadavg`): at most 3 worker sessions at a time, an
-  audit session counting as 2; a session's headless browser and test suites go through
+- **Machine load** (4 cores, 8 GB; check `/proc/loadavg`): at most 3 units of worker sessions at a
+  time, an audit session counting as 2 (`worker-start` enforces it with the load check; queue a
+  new session in `work/orchestrator.md` until one finishes); a session's headless browser and test suites go through
   `.factory/heavy`; only one session per repo runs the app (onderwijsdata-chat's ports are fixed).
   Above a load of 2× the cores, start no new jobs or sessions.
 

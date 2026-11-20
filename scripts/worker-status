@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# worker-status [-v] — one overview of every worker session for the orchestrator, in one call:
+# per tmux worker window its kind (build/audit/light), the factory's running jobs and open PRs
+# (.factory/watch --once), the worker's last status line, and the open PRs/MRs on its forge with
+# auto-merge and conflict state; then the session budget, the load and the heavy slots.
+# -v: also the last 6 screen lines per worker.
+set -uo pipefail
+ROOT=/workspaces/dev-dots; V=0; [ "${1:-}" = -v ] && V=1
+units=0; declare -A seen
+while IFS=' ' read -r name cwd; do
+  case $cwd in "$ROOT"/work/*) ;; *) continue;; esac
+  d=${cwd#"$ROOT"/work/}; d=${d%%/*}; clone=$ROOT/work/${d%-worktrees}
+  kind=$("$ROOT/scripts/worker-brief" kind "${d%-worktrees}" 2>/dev/null || echo none)
+  case $kind in audit) units=$((units+2));; *) units=$((units+1));; esac
+  scr=$(tmux capture-pane -p -t "$name" 2>/dev/null)
+  state=idle
+  echo "$scr" | grep -qE 'Enter to select|Enter to confirm' && state=QUESTION
+  echo "$scr" | grep -qE 'esc to interrupt|^ *◯ ' && [ $state = idle ] && state=busy
+  echo "$scr" | grep -q "hit your .*limit" && ! echo "$scr" | grep -q 'esc to interrupt' && state="usage-limit"
+  last=$(echo "$scr" | grep -E '^● ' | tail -1 | sed 's/^● //; s/ *│.*//' | cut -c1-150)
+  echo "■ $name [$kind, $state]"
+  [ -n "$last" ] && echo "  last: $last"
+  if [ -x "$clone/.factory/watch" ]; then
+    (cd "$clone" && timeout 30 .factory/watch --once 2>/dev/null) \
+      | grep -E '^ *(▶|◆|✗|⏸|RUNNING|OPEN|QUEUED|NEEDS|no jobs)|!?[0-9]+ +[✓✗●]' | grep -v '^factory ·' | sed 's/^/  /' | head -12
+  fi
+  url=$(git -C "$clone" remote get-url origin 2>/dev/null || true)
+  [ -n "$url" ] && [ -n "${seen[$url]:-}" ] && url="" && echo "  (MRs: see ${seen[$(git -C "$clone" remote get-url origin)]})"
+  [ -n "$url" ] && seen[$url]=$name
+  case $url in
+    *git.sdp.surf.nl*)
+      p=$(echo "$url" | sed -E 's#https://git.sdp.surf.nl/##; s#\.git$##' | sed 's#/#%2F#g')
+      glab api --hostname git.sdp.surf.nl "projects/$p/merge_requests?state=opened&per_page=20" 2>/dev/null \
+        | jq -r '.[] | select(.draft|not) | "  MR !\(.iid) \(.detailed_merge_status)\(if .merge_when_pipeline_succeeds then " auto-merge" else "" end) · \(.title[0:60])"' 2>/dev/null;;
+    *github.com*)
+      r=$(echo "$url" | sed -E 's#https://github.com/##; s#\.git$##')
+      gh pr list --repo "$r" --json number,title,mergeable,autoMergeRequest,isDraft 2>/dev/null \
+        | jq -r '.[] | select(.isDraft|not) | "  PR #\(.number) \(.mergeable)\(if .autoMergeRequest then " auto-merge" else "" end) · \(.title[0:60])"' 2>/dev/null;;
+  esac
+  [ $V = 1 ] && echo "$scr" | grep -v -E '^\s*$|──' | tail -6 | cut -c1-140 | sed 's/^/  | /'
+done < <(tmux list-windows -a -F '#{window_name} #{pane_current_path}' | sort -u -k1,1)
+echo "budget: $units of ${MAX_UNITS:-3} units · load $(cut -d' ' -f1-3 /proc/loadavg) on $(nproc) cores"
+for f in /tmp/factory-heavy-$(id -u)/slot-*.lock; do
+  [ -s "$f" ] && jq -r '"heavy: \(.cwd|sub(".*/work/";"")) · \(.cmd[0:60]) · weight \(.weight)\(if .priority then " · "+.priority else "" end)"' "$f" 2>/dev/null
+done
+exit 0
