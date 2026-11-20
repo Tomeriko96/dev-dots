@@ -132,6 +132,11 @@ In repos where the user is a minor contributor (`.github`, sdp-tools, studentpro
 the issue at hand. Recount with
 `gh api repos/<o>/<r>/contributors --jq '.[]|select(.login=="Tomeriko96").contributions'`.
 
+**Fun side projects** (personal, no users depending on them: e.g. `Tomeriko96/tetris`) need
+not be perfect. Tell their worker to keep jobs light: lowest sensible effort, no extra review
+rounds, no Playwright/browser gates, never wait for a heavy slot (run small steps without
+`.factory/heavy` or with `--weight 1`), so the slots stay free for the work repos.
+
 **Running the apps locally without credentials** (checked 2026-11-20 in this container, which
 has no Docker):
 - **onderwijsdata-chat:** `uv sync && make dev` (backend :8000, frontend :5173). It starts with no
