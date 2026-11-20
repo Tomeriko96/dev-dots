@@ -167,7 +167,9 @@ row, not a one-off night instruction that has since lapsed):
 house style for every UI, chart, report or document they produce: the
 `npuls-huisstijl` skill (tokens, colours, type, logos; `vormgever-npuls-huisstijl` for design
 work). It wins over generic design guidance such as `frontend-design`, which only applies to
-personal repos without a house style. Row to send: "House style: Npuls (skill npuls-huisstijl)
+personal repos without a house style. In a CEDA clone also set
+`"house_style": {"skills": ["npuls-huisstijl"]}` in `.factory/config.json` (factory ≥ v0.9.0), so the
+builder and the ux/ui reviewers load it. Row to send: "House style: Npuls (skill npuls-huisstijl)
 for all UI, charts, reports and documents; it wins over generic design skills."
 
 **Never touch:** `cedanl/studentprognose` (the user's instruction). Starting work there needs the
