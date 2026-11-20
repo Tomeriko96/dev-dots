@@ -7,3 +7,6 @@ tool-versions.txt
 # Clones of other repos to work on (see AGENTS.md "Working on another repo")
 /work/
 /factory-template/
+
+# Python bytecode from running the tests
+__pycache__/
