@@ -132,6 +132,17 @@ In repos where the user is a minor contributor (`.github`, sdp-tools, studentpro
 the issue at hand. Recount with
 `gh api repos/<o>/<r>/contributors --jq '.[]|select(.login=="Tomeriko96").contributions'`.
 
+**Live audits** (the user's own apps; first run on prompt-library and onderwijsdata-chat,
+2026-11-20): one subagent per theme on Opus at effort high, the app running locally without
+credentials, driven with headless Chromium. Themes: one per end-user persona, accessibility
+(WCAG 2.2 AA), privacy/AVG, security, technical/operational, content/language, plus
+app-specific ones (an editorial workflow, data correctness, exports). Each theme has a
+reusable instruction `docs/audits/<theme>.md` and dated reports
+`docs/audits/reports/<YYYY-MM-DD>-<theme>-<short hash>.md` naming the full HEAD commit audited.
+Only reproduced defects become issues (deduplicated; at most 10 per repo per day); the rest
+stays in the report. In onderwijsdata-chat the agent plays the LLM through mock scenarios
+(#1065) so the chat and report flow run without a key.
+
 **Fun side projects** (personal, no users depending on them: e.g. `Tomeriko96/tetris`) need
 not be perfect. Tell their worker to keep jobs light: lowest sensible effort, no extra review
 rounds, no Playwright/browser gates, never wait for a heavy slot (run small steps without
