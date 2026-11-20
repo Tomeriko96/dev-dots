@@ -135,7 +135,9 @@ the issue at hand. Recount with
 **Fun side projects** (personal, no users depending on them: e.g. `Tomeriko96/tetris`) need
 not be perfect. Tell their worker to keep jobs light: lowest sensible effort, no extra review
 rounds, no Playwright/browser gates, never wait for a heavy slot (run small steps without
-`.factory/heavy` or with `--weight 1`), so the slots stay free for the work repos.
+`.factory/heavy` or with `--weight 1`), so the slots stay free for the work repos. Skip
+validation runs and deliver by pushing straight to the default branch (no PR): the user's
+standing approval for these repos only.
 
 **Running the apps locally without credentials** (checked 2026-11-20 in this container, which
 has no Docker):
