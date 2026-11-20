@@ -139,9 +139,10 @@ rounds, no Playwright/browser gates, never wait for a heavy slot (run small step
 validation runs and deliver by pushing straight to the default branch (no PR): the user's
 standing approval for these repos only.
 
-**Running the apps locally without credentials** (checked 2026-11-20 in this container, which
-has no Docker):
-- **onderwijsdata-chat:** `uv sync && make dev` (backend :8000, frontend :5173). It starts with no
+**Running the apps locally without credentials** (both checked end to end with headless
+Chromium on 2026-11-20 in this container, which has no Docker; 0 console errors):
+- **onderwijsdata-chat:** `uv sync && make dev` (backend :8000, frontend :5173; the Vite proxy is
+  fixed to :8000, so keep the default ports, and only one copy can run at a time). It starts with no
   keys at all: SQLite, no login locally (OIDC is opt-in), and the catalogue, data tools and
   `mcp_server.py` need no key. Only chat answers need an LLM key; there is no mock-LLM mode, so
   test the chat flow up to the model call, or with litellm's `mock_response` in tests.
@@ -153,7 +154,7 @@ has no Docker):
   $P/psql -h 127.0.0.1 -p 5544 -U postgres -c 'create database prompts'
   export POSTGRES_URI=postgresql+asyncpg://postgres@127.0.0.1:5544/prompts   # asyncpg, not psycopg
   just migrate && DEV_USER_FALLBACK=true just run      # :8080, open, seeded with the 12 POC prompts
-  just frontend-dev                                    # UI on :5173
+  cd frontend && npx vite --port 5174 --strictPort     # UI; :5173 clashes with onderwijsdata-chat
   ```
   Call `$P/pg_ctl` directly, not through `micromamba run` (that hangs on the server process).
   Unset `OIDC_PROVIDER` = no login; `ENVIRONMENT=development` is required (`just run` sets it).
