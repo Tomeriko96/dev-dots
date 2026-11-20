@@ -19,8 +19,8 @@ HISTCONTROL=ignoreboth
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=50000
+HISTFILESIZE=100000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -120,11 +120,23 @@ source ~/.config/bash/rc
 # Use starship with bash
 eval "$(starship init bash)"
 
+# Write each command to the history file right away, so parallel shells
+# (tmux panes) do not lose history. Appended after starship, so starship's
+# precmd still sees the exit status of the last command. Guarded, so sourcing
+# this file twice does not add it twice. PROMPT_COMMAND may be an array (bash 5.1+).
+if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
+  [[ " ${PROMPT_COMMAND[*]} " == *'history -a'* ]] || PROMPT_COMMAND+=('history -a')
+else
+  [[ ${PROMPT_COMMAND:-} == *'history -a'* ]] || PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}history -a"
+fi
+
 # uv shell completion
 eval "$(uv generate-shell-completion bash)"
 
-export PATH="$HOME/.devcontainers/bin:$PATH"
-export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+# PATH comes from ENV PATH in the Dockerfile; do not prepend it again here,
+# or every nested shell (tmux, bash -i) duplicates the entries. The vendor
+# blocks that get appended below this file at image build (micromamba,
+# OpenCode) still prepend; the last Dockerfile step appends a PATH dedupe line.
 
 # Use zoxide with bash. Keep this last: starship moves an existing
 # PROMPT_COMMAND into STARSHIP_PROMPT_COMMAND, so zoxide must append its hook
