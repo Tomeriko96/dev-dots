@@ -114,9 +114,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Use zoxide with bash
-eval "$(zoxide init bash)"
-
 # Load bash helpers
 source ~/.config/bash/rc
 
@@ -128,3 +125,8 @@ eval "$(uv generate-shell-completion bash)"
 
 export PATH="$HOME/.devcontainers/bin:$PATH"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/sbin:/bin:$PATH"
+
+# Use zoxide with bash. Keep this last: starship moves an existing
+# PROMPT_COMMAND into STARSHIP_PROMPT_COMMAND, so zoxide must append its hook
+# after starship (starship_precmd stays first and reads $? correctly).
+eval "$(zoxide init bash)"

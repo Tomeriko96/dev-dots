@@ -124,14 +124,32 @@ csvlens() {
 # =====================
 # Shell & History Utilities
 # =====================
+# cd with a zoxide fallback: behaves like builtin cd (options, -, --, CDPATH,
+# exit codes); only when that fails and the first arg is not an option does it
+# try a zoxide jump. Errors go to stderr and return non-zero.
 zd() {
   if [ $# -eq 0 ]; then
-    builtin cd ~ && return
-  elif [ -d "$1" ]; then
-    builtin cd "$1"
-  else
-    z "$@" && printf "\U000F17A9 " && pwd || echo "Error: Directory not found"
+    builtin cd
+    return
   fi
+  if builtin cd "$@" 2>/dev/null; then
+    return 0
+  fi
+  if [[ $1 != -* ]] && declare -F z >/dev/null; then
+    if z "$@" 2>/dev/null; then
+      printf "\U000F17A9 "
+      pwd
+      return 0
+    fi
+  else
+    # Not a zoxide case: repeat builtin cd so its own error is shown.
+    builtin cd "$@"
+    return
+  fi
+  # zoxide found nothing either: show the builtin error (e.g. permission denied).
+  builtin cd "$@" && return 0
+  echo "zd: no such directory or zoxide match: $*" >&2
+  return 1
 }
 __fzf_history__() {
   local selected
