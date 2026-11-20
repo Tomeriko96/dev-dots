@@ -82,7 +82,8 @@ CLI tools are pinned in `.devcontainer/mise.toml` and checksum-locked in `.devco
 - **Claude Code auth:** Handled automatically via browser login; uses subscription, not Azure Foundry
 - **Bash helpers:** Auto-loaded from `bash/.config/bash/`
 - **Claude Code hooks:** Installed to `~/.claude/hooks/` (e.g., blocks reading `.env` files)
-- **Container settings:** Merged into `~/.claude/settings.json` during post-create
+- **Container settings:** Merged into `~/.claude/settings.json` during post-create (`merge-claude-settings.jq`; your own keys, hooks and rules are kept)
+- **Permission mode:** Claude runs in bypass mode without permission prompts (`permissions.defaultMode: bypassPermissions`, `skipDangerousModePermissionPrompt`); `/workspaces`, `/tmp` and `/home/dev` are extra working directories (`additionalDirectories`). The dotenv deny rules (`.env`, `.env.local`, `.env.*.local`, `.env.production`, `.env.development`, `.env.test`, `.env.staging`, `.env.prod`, `.env.dev`) and the hook stay active
 
 ## Skills Integration
 
@@ -94,6 +95,7 @@ npx --yes skills add cedanl/.github --skill '*' -a claude-code -a opencode -a pi
 
 ## Notes
 
+- Autonomous orchestration (an orchestrator Claude that starts factory workers per repo in tmux) lives in [Tomeriko96/dev-server](https://github.com/Tomeriko96/dev-server), not here
 - CLI tool versions are pinned in `.devcontainer/mise.toml` / `mise.lock` (rebuild needed after a change). `mise` itself is pinned in the `Dockerfile`.
 - First build takes 5–10 minutes; subsequent builds are cached
 - Container runs on Debian Bookworm; your host (Fedora Atomic Sway) is separate

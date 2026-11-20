@@ -119,7 +119,8 @@ if [ -d "$REPO_HOOKS_DIR" ]; then
   echo "[OK] Hooks installed to $CLAUDE_HOOKS_DIR"
 fi
 
-# Container-wide settings to merge (hook + common permissions)
+# Container-wide settings to merge (hook + permissions). The container is the boundary:
+# Claude runs in bypass mode without permission prompts; only the .env reads stay denied.
 CONTAINER_SETTINGS=$(cat <<'JSONEOF'
 {
   "hooks": {
@@ -135,8 +136,23 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
       }
     ]
   },
+  "skipDangerousModePermissionPrompt": true,
   "permissions": {
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": ["/workspaces", "/tmp", "/home/dev"],
     "allow": [
+      "Bash",
+      "Bash(rm:*)",
+      "Bash(rm -rf:*)",
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "WebFetch",
+      "WebSearch",
+      "Skill",
       "Bash(gh repo:*)",
       "Bash(git clone:*)",
       "Bash(git add:*)",
@@ -149,7 +165,14 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
     ],
     "deny": [
       "Read(**/.env)",
-      "Read(**/.env.*)"
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.production)",
+      "Read(**/.env.development)",
+      "Read(**/.env.test)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.dev)"
     ]
   }
 }
