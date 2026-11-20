@@ -156,7 +156,7 @@ in `.factory/config.json` (`full_bundle_max` needs factory-template ≥ PR #3), 
 findings share one job, one PR and one CI run.
 
 **External audits** (an audit the user pastes or sends, e.g. a live run on the test environment):
-save it as `work/<repo>-audit-<YYYY-MM-DD>.md`, start a worker in its own clone with "verify each
+save it in `work/audits/<repo>/<YYYY-MM-DD>/`, start a worker in its own clone with "verify each
 finding against main, open modular issues for the reproduced ones (deduplicated), then bundle
 them into jobs", and tell any audit session of that repo to deduplicate against it.
 
@@ -164,11 +164,13 @@ them into jobs", and tell any audit session of that repo to deduplicate against 
 2026-11-20): one subagent per theme on Opus at effort high, the app running locally without
 credentials, driven with headless Chromium. Themes: one per end-user persona, accessibility
 (WCAG 2.2 AA), privacy/AVG, security, technical/operational, content/language, plus
-app-specific ones (an editorial workflow, data correctness, exports). Each theme has a
-reusable instruction `docs/audits/<theme>.md` and dated reports
-`docs/audits/reports/<YYYY-MM-DD>-<theme>-<short hash>.md` naming the full HEAD commit audited.
-Only reproduced defects become issues (deduplicated; at most 10 per repo per day); the rest
-stays in the report. In onderwijsdata-chat the agent plays the LLM through mock scenarios
+app-specific ones (an editorial workflow, data correctness, exports). The deliverable is
+**modular issues** (one reproduced defect each, deduplicated, with the evidence written into the
+issue: steps, command + output, what was expected; at most 10 per repo per day). Audit files are
+**not committed** (no audit branch or MR): instructions, dated reports naming the full HEAD
+commit, screenshots and logs stay local in `/workspaces/dev-dots/work/audits/<repo>/<YYYY-MM-DD>/`
+(outside the clone, so `work-rm` and a fresh clone do not lose them). In onderwijsdata-chat the
+agent plays the LLM through mock scenarios
 (#1065) so the chat and report flow run without a key.
 
 **Fun side projects** (personal, no users depending on them: e.g. `Tomeriko96/react-tetris`) need
