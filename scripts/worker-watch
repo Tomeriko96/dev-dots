@@ -50,6 +50,11 @@ while [ "$(date +%s)" -lt "$end" ]; do
       continue
     fi
 
+    # the Remote Control info panel blocks background updates: close it (cursor on Continue)
+    if echo "$s" | grep -q 'Remote Control' && echo "$s" | grep -qE '❯ *Continue'; then
+      tmux send-keys -t "$pid" Enter; log "closed the remote-control panel in $name"; continue
+    fi
+
     # screen hash without the spinner/timer lines, so a ticking clock is not "change"
     h=$(hash_of "$pid")
     acked=0; grep -qxF "$pid $h" "$ACK" && acked=1
