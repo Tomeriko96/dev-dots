@@ -176,9 +176,11 @@ for all UI, charts, reports and documents; it wins over generic design skills."
 user to name it again.
 
 **Bundling.** Issues stay modular (one defect per issue, so each is traceable and closable);
-jobs bundle them. In the user's own repos set `"limits": {"bundle_max": 5, "full_bundle_max": 3}`
-in `.factory/config.json` (`full_bundle_max` needs factory-template ≥ PR #3), so related audit
-findings share one job, one PR and one CI run.
+jobs bundle them by area, not by count. In the user's own repos set
+`"limits": {"bundle_max": 10, "full_bundle_max": 5}` in `.factory/config.json`, so related, tightly
+scoped findings share one job, one PR and one CI run; what bounds a bundle is that its issues touch
+the same area (one review, one revert), not a small number. Keep separate what touches unrelated
+modules, or what one risky issue could hold back (auth, schema, dependencies: `factory:solo`).
 
 **External audits** (an audit the user pastes or sends, e.g. a live run on the test environment):
 save it in `work/audits/<repo>/<YYYY-MM-DD>/`, start a worker in its own clone with "verify each
