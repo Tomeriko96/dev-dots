@@ -203,6 +203,58 @@ class EntireLocalHooksTest(unittest.TestCase):
         self.assertEqual(self.read(self.settings), {**committed, "model": "opus"})
         self.assertFalse(self.local.exists())
 
+    def test_keeps_committed_empty_event(self):
+        original = '{\n  "hooks": {\n    "Stop": []\n  }\n}\n'
+        self.commit(original)
+        self.write(simulate_entire_enable(self.read(self.settings)))
+
+        res = self.run_script()
+
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(self.settings.read_text(), original)
+        self.assert_clean()
+
+    # security: a committed symlink at a predictable temp path must not redirect the write
+    def test_does_not_follow_symlinked_temp_paths(self):
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        victims = []
+        for name in ("settings.local.json.tmp", "settings.json.tmp"):
+            victim = Path(outside.name) / name
+            victim.write_text("precious\n")
+            (self.repo / ".claude" / name).symlink_to(victim)
+            victims.append(victim)
+        self.git("add", ".claude")
+        self.commit(json.dumps({"model": "opus"}, indent=2) + "\n")
+        data = self.read(self.settings)
+        data["env"] = {"FOO": "1"}  # forces a rewrite of settings.json as well
+        self.write(simulate_entire_enable(data))
+
+        res = self.run_script()
+
+        self.assertEqual(res.returncode, 0, res.stderr)
+        for victim in victims:
+            self.assertEqual(victim.read_text(), "precious\n")
+        self.assertFalse(self.local.is_symlink())
+        self.assertFalse(self.settings.is_symlink())
+        self.assertEqual(len(entire_commands(self.read(self.local))), 3)
+        self.assertEqual(self.read(self.settings), {"model": "opus", "env": {"FOO": "1"}})
+        leftovers = [p.name for p in (self.repo / ".claude").iterdir() if p.name.startswith(".settings")]
+        self.assertEqual(leftovers, [])
+
+    def test_rewrite_keeps_file_mode(self):
+        self.commit('{\n  "model": "opus"\n}\n')
+        self.settings.chmod(0o644)
+        data = self.read(self.settings)
+        data["env"] = {"FOO": "1"}
+        self.write(simulate_entire_enable(data))
+
+        res = self.run_script()
+
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(self.settings.stat().st_mode & 0o777, 0o644)
+        self.assertEqual(self.local.stat().st_mode & 0o777, 0o644)
+
     # criterion 6
     def test_unparseable_settings_left_untouched(self):
         self.commit('{\n  "model": "opus"\n}\n')

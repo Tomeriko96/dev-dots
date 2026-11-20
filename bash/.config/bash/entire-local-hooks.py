@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SETTINGS = Path(".claude/settings.json")
@@ -67,8 +68,8 @@ def zonder_entire(hooks: dict, behoud: dict | None = None) -> dict:
             rest = [h for h in oud if not is_entire(h) or sleutel(h) in vast.get(event, set())]
             if rest or not oud or len(rest) == len(oud):
                 nieuw.append({**groep, "hooks": rest} if "hooks" in groep else groep)
-        if nieuw or not groepen:
-            uit[event] = nieuw
+        if nieuw or not groepen or (event in (behoud or {}) and not behoud[event]):
+            uit[event] = nieuw  # ook een event dat in de gecommitte versie al leeg was
     return uit
 
 
@@ -105,9 +106,23 @@ def inspringing(tekst: str) -> int | str:
 
 
 def schrijf(pad: Path, data: dict, indent: int | str = 2) -> None:
-    tmp = pad.with_name(pad.name + ".tmp")
-    tmp.write_text(json.dumps(data, indent=indent, ensure_ascii=False) + "\n")
-    os.replace(tmp, pad)
+    """Schrijf atomair via een nieuw, onvoorspelbaar tijdelijk bestand (volgt geen symlink uit de repo)."""
+    try:
+        modus = os.stat(pad).st_mode & 0o777
+    except OSError:
+        modus = 0o644
+    fd, tmp = tempfile.mkstemp(dir=pad.parent, prefix=f".{pad.name}.", suffix=".tmp")
+    try:
+        os.fchmod(fd, modus)
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(data, indent=indent, ensure_ascii=False) + "\n")
+        os.replace(tmp, pad)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def lees(pad: Path) -> dict | None:
