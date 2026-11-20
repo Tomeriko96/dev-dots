@@ -19,7 +19,9 @@ touch "$ACK"
 hash_of() { tmux capture-pane -p -t "$1" | grep -v -E '[0-9]+m? ?[0-9]*s ·|tokens|esc to interrupt' | md5sum | cut -c1-12; }
 if [ "${1:-}" = ack ]; then   # worker-watch ack <window>…: acknowledge the current screen
   shift
-  for w in "$@"; do p=$(tmux display -p -t "$w" '#{pane_id}'); echo "$p $(hash_of "$w")" >> "$ACK"; echo "acked $w ($p)"; done
+  # "<pane> *" = quiet until that worker is busy again (compaction or a status line changing the
+  # screen does not count); the watcher drops the line once it sees the worker busy.
+  for w in "$@"; do p=$(tmux display -p -t "$w" '#{pane_id}'); echo "$p *" >> "$ACK"; echo "acked $w ($p) until busy"; done
   exit 0
 fi
 declare -A since last lastt idle_hash idle_since
@@ -57,7 +59,7 @@ while [ "$(date +%s)" -lt "$end" ]; do
 
     # screen hash without the spinner/timer lines, so a ticking clock is not "change"
     h=$(hash_of "$pid")
-    acked=0; grep -qxF "$pid $h" "$ACK" && acked=1
+    acked=0; grep -qxF "$pid $h" "$ACK" && acked=1; grep -qxF "$pid *" "$ACK" && acked=1
 
     # 2. question dialogs
     if echo "$s" | grep -qE 'Enter to select|Enter to confirm'; then
@@ -71,7 +73,9 @@ while [ "$(date +%s)" -lt "$end" ]; do
 
     # 3. idle with an unchanged screen
     # busy: the main turn runs, or background agents run (their rows start with ◯)
-    if echo "$s" | grep -qE 'esc to interrupt|^ *◯ '; then unset "idle_hash[$pid]" "idle_since[$pid]"; continue; fi
+    if echo "$s" | grep -qE 'esc to interrupt|^ *◯ '; then
+      grep -qxF "$pid *" "$ACK" && sed -i "\\|^$pid \\*\$|d" "$ACK"
+      unset "idle_hash[$pid]" "idle_since[$pid]"; continue; fi
     if [ "${idle_hash[$pid]:-}" != "$h" ]; then idle_hash[$pid]=$h; idle_since[$pid]=$now; continue; fi
     if (( acked == 0 && now - ${idle_since[$pid]} >= IDLE_WAIT )); then
       report 4 "$pid" "$name" "$h" "$s" "idle $(( (now - ${idle_since[$pid]})/60 )) min"
