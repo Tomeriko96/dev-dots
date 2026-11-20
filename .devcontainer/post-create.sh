@@ -110,8 +110,11 @@ mkdir -p "$CLAUDE_HOOKS_DIR"
 
 # Install hook scripts
 if [ -d "$REPO_HOOKS_DIR" ]; then
-  cp "$REPO_HOOKS_DIR"/*.sh "$CLAUDE_HOOKS_DIR/" 2>/dev/null && \
-    chmod +x "$CLAUDE_HOOKS_DIR"/*.sh
+  # test-*.sh are repo-only test scripts, not hooks
+  for hook in "$REPO_HOOKS_DIR"/*.sh; do
+    case "$(basename "$hook")" in test-*) continue ;; esac
+    cp "$hook" "$CLAUDE_HOOKS_DIR/" && chmod +x "$CLAUDE_HOOKS_DIR/$(basename "$hook")"
+  done
   echo "[OK] Hooks installed to $CLAUDE_HOOKS_DIR"
 fi
 
@@ -121,7 +124,7 @@ CONTAINER_SETTINGS=$(cat <<'JSONEOF'
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Bash",
+        "matcher": "Read|Bash|Grep",
         "hooks": [
           {
             "type": "command",
