@@ -116,7 +116,50 @@ your report what you accepted.
 ### 5. The worker brief
 Send this as the worker's first message (one line, so `send-keys` sends it as one message):
 
-> Working agreements for this session (the user steers you from a phone through remote control): delivery is a ready-for-review PR (pr, draft false) and run the smoke test, without asking. Take the recommended option yourself for routine choices (effort, bundling, starting a triage plan, smoke test, clean-up) and say so in one line; ask only content questions (which option to build, design choices, unblocking an issue). Keep questions phone-sized: at most 3 options, recommended first, one line each. After every job state change (PR open, merged, needs-human, failed) post one status line like "#233 → PR #281 open, CI running". When a job reaches PR or merged, run /factory next yourself until it finds nothing, then report once that you are done. After a merge, check CI on the base branch: if it fails, first analyse the cause and whether that check is still needed, then propose a fix; do not fix CI on your own. Close issues and clean up worktrees of finished jobs without asking. When /factory next finds nothing to build, look for new work yourself (discovery): run the tests and linters, start the app and use it like a user with headless Chromium (`uv run --no-project --python 3 --with playwright python …`, install it with `uv run --no-project --python 3 --with playwright playwright install chromium` if missing), and check the code against any audit or review markdown in the repo (e.g. `docs/audit*.md`, `AUDIT*.md`, `docs/review*`). Only report real defects you reproduced (a failing command, a wrong output, a broken page, an audit finding that is still true in the code), not style preferences; search open and closed issues first to avoid duplicates. Open at most 5 new issues per night per repo, each with the evidence (command + output or screenshot) and numbered testable acceptance criteria, as the user (gh/glab), then build them with /factory issue <nr>. Never merge.
+> Working agreements for this session (the user steers you from a phone through remote control): delivery is a ready-for-review PR (pr, draft false) and run the smoke test, without asking. Take the recommended option yourself for routine choices (effort, bundling, starting a triage plan, smoke test, clean-up) and say so in one line; ask only content questions (which option to build, design choices, unblocking an issue). Keep questions phone-sized: at most 3 options, recommended first, one line each. After every job state change (PR open, merged, needs-human, failed) post one status line like "#233 → PR #281 open, CI running". When a job reaches PR or merged, run /factory next yourself until it finds nothing, then report once that you are done. After a merge, check CI on the base branch: if it fails, first analyse the cause and whether that check is still needed, then propose a fix; do not fix CI on your own. Close issues and clean up worktrees of finished jobs without asking. When /factory next finds nothing to build, look for new work yourself (discovery): run the tests and linters, start the app locally without credentials (its dev/open mode and a local database; never ask for or read secrets or `.env`) and use it like a user with headless Chromium, also to check your own UI changes (`uv run --no-project --python 3 --with playwright python …`, install it with `uv run --no-project --python 3 --with playwright playwright install chromium` if missing), and check the code against any audit or review markdown in the repo (e.g. `docs/audit*.md`, `AUDIT*.md`, `docs/review*`). Only report real defects you reproduced (a failing command, a wrong output, a broken page, an audit finding that is still true in the code), not style preferences; search open and closed issues first to avoid duplicates. Open at most 5 new issues per night per repo, each with the evidence (command + output or screenshot) and numbered testable acceptance criteria, as the user (gh/glab), then build them with /factory issue <nr>. Never merge yourself; switching on the forge's auto-merge is fine when `delivery.auto_merge` is true.
+
+**Repo notes.** When the repo has a row in "Repo context" below, send that row as a second
+one-line message right after the brief: the worker does not read this file.
+
+### Repo context
+**The user's own repos.** Personal `Tomeriko96/*` and the GitLab projects they author, plus
+cedanl repos where they wrote most of the commits (2026-11): mbo-bekostiging-bestanden (93%),
+onderwijsdata-chat (86%, primary on GitLab `surf-internal/npuls/ceda/`), dev-dots,
+python-uv-devcontainer, r-devcontainer, savvy, 1cijferho (58%), 1cijferho-evaluatietool (56%),
+and `surf-internal/npuls/sectoropgave/prompt-library` on GitLab. In these, workers may start the
+app and inspect it visually (headless Chromium via uv playwright) during discovery and audits.
+In repos where the user is a minor contributor (`.github`, sdp-tools, studentprognose, …) keep to
+the issue at hand. Recount with
+`gh api repos/<o>/<r>/contributors --jq '.[]|select(.login=="Tomeriko96").contributions'`.
+
+**Running the apps locally without credentials** (checked 2026-11-20 in this container, which
+has no Docker):
+- **onderwijsdata-chat:** `uv sync && make dev` (backend :8000, frontend :5173). It starts with no
+  keys at all: SQLite, no login locally (OIDC is opt-in), and the catalogue, data tools and
+  `mcp_server.py` need no key. Only chat answers need an LLM key; there is no mock-LLM mode, so
+  test the chat flow up to the model call, or with litellm's `mock_response` in tests.
+- **prompt-library:** needs PostgreSQL; `just db-up` uses Docker, which is not here. Instead:
+  ```bash
+  micromamba create -y -n pg -c conda-forge postgresql=16   # once
+  P=~/micromamba/envs/pg/bin; D=/tmp/pgdata-prompts
+  $P/initdb -D $D -U postgres --auth=trust && $P/pg_ctl -D $D -o "-p 5544 -k /tmp" -l /tmp/pg.log start
+  $P/psql -h 127.0.0.1 -p 5544 -U postgres -c 'create database prompts'
+  export POSTGRES_URI=postgresql+asyncpg://postgres@127.0.0.1:5544/prompts   # asyncpg, not psycopg
+  just migrate && DEV_USER_FALLBACK=true just run      # :8080, open, seeded with the 12 POC prompts
+  just frontend-dev                                    # UI on :5173
+  ```
+  Call `$P/pg_ctl` directly, not through `micromamba run` (that hangs on the server process).
+  Unset `OIDC_PROVIDER` = no login; `ENVIRONMENT=development` is required (`just run` sets it).
+
+**1cijferho feeds other repos.** Its decoded/`_enriched` output (file names, suffixes, column
+names and types) is read by: `cedanl/no-fairness-without-awareness` (R; `read_metadata.R`,
+`transform_ev_data.R`, expects the `_enriched` file), `cedanl/1cho_ins_preparation_r`,
+`cedanl/1cijferho_avans` and `cedanl/1cijferho-evaluatietool`. A 1cijferho job that changes the
+output must grep those repos for the changed names, state the impact in the PR, and open a
+follow-up issue in a consumer that breaks. Row to send: "1cijferho output is consumed by
+no-fairness-without-awareness, 1cho_ins_preparation_r, 1cijferho_avans and 1cijferho-evaluatietool
+(cedanl): when a job changes output file names, suffixes, columns or types, grep those repos,
+state the impact in the PR and open a follow-up issue where one breaks."
 
 ### 6. Hand over, then stay out
 **Unattended (the user is away or asleep):** run `/workspaces/dev-dots/scripts/worker-watch [hours]`
