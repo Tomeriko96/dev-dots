@@ -54,11 +54,15 @@ De globale config staat in `~/.config/opencode/opencode.json` met `permission: "
 
 Entire legt AI-sessies (prompts, tool calls, file changes, transcripts) vast naast je commits, zodat je elke wijziging kunt herleiden naar de prompt die hem veroorzaakte.
 
-**Automatische activatie:** de `claude`-functie detecteert of je in een CEDA-repo zit en schakelt Entire automatisch in bij de eerste aanroep — je hoeft niks handmatig te doen. Een CEDA-repo is een repo met `cedanl/` (GitHub-org) of `surf-internal/npuls/ceda/` (GitLab-groep) in de origin-URL.
+**Automatische activatie:** de `claude`-functie roept `entire-setup` aan, dat Entire aanzet voor de repo waar je staat **én voor elke repo direct onder de workspace-root** (`/workspaces/dev-dots`). Het maakt dus niet uit of je Claude in de projectmap of in de root start. Een CEDA-repo is een repo met `cedanl/` (GitHub-org) of `surf-internal/npuls/ceda/` (GitLab-groep) in de origin-URL. Een repo die al klopt wordt alleen gelezen, dus de start blijft snel.
 
 ```bash
-claude   # activeert entire automatisch als origin cedanl/ of surf-internal/npuls/ceda/ is
+claude              # zet Entire aan in de repo waar je staat en in de zustermappen
+entire-setup        # zelf draaien en per repo zien wat er staat
+entire-setup --check  # alleen controleren, niets aanpassen (exitcode 1 als iets niet klopt)
 ```
+
+Een mislukte `entire enable` wordt getoond met de reden, niet meer stilgehouden. Checkpoints worden opgeslagen op de gedeelde branch `entire/checkpoints/v1` (`git-branch`). De Entire-versie is gepind in de Dockerfile (`ENTIRE_VERSION`).
 
 Alle checkpoints worden gesynchroniseerd naar de centrale private repo **`cedanl/entire-checkpoints`** bij elke `git push`. Entire kent als checkpoint-remote alleen GitHub, dus ook de sessies van GitLab-repo's gaan daarheen. Persoonlijke repos en andere organisaties of groepen worden overgeslagen.
 

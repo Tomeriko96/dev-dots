@@ -27,6 +27,8 @@ ARG AZCOPY_VERSION="10.26.0"
 ARG AZD_VERSION="1.9.5"
 # renovate: datasource=gitlab-releases depName=gitlab-org/cli extractVersion=^v(?<version>.+)$
 ARG GLAB_VERSION="1.58.0"
+# renovate: datasource=github-releases depName=entireio/cli extractVersion=^v(?<version>.+)$
+ARG ENTIRE_VERSION="0.13.4"
 # renovate: datasource=github-releases depName=getsops/sops extractVersion=^v(?<version>.+)$
 ARG SOPS_VERSION="3.10.2"
 # renovate: datasource=github-releases depName=fluxcd/flux2 extractVersion=^v(?<version>.+)$
@@ -379,8 +381,8 @@ RUN curl -fsSL https://opencode.ai/install | bash
 # Install Claude Code CLI (unpinned: install script does not expose a version flag)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Install Entire CLI (unpinned: install script does not expose a version flag)
-RUN curl -fsSL https://entire.io/install.sh | bash
+# Install Entire CLI (pinned: the install script takes --version)
+RUN curl -fsSL https://entire.io/install.sh | bash -s -- --version "${ENTIRE_VERSION}"
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | UV_VERSION=${UV_VERSION} sh
