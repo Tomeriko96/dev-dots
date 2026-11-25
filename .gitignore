@@ -3,3 +3,6 @@ tool-versions.txt
 
 # Claude Code local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Gebouwde docs-site
+site/

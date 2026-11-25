@@ -22,7 +22,7 @@ Devcontainer voor dagelijks ontwikkelwerk — AI-first, reproduceerbaar, direct 
 3. Voer `onboard` uit — begeleide authenticatie (gh, opencode, claude) + git-identiteit
 4. Aan de slag met `nvim .` of `claude`
 
-> Claude Code en OpenCode starten met `--dangerously-skip-permissions` (ingebakken als shell-alias).
+> Claude Code en OpenCode starten met `--dangerously-skip-permissions` (ingebakken: `claude` is een shell-functie, `opencode` een alias).
 > Git gebruikt per user een expliciete identiteit (ingesteld door `onboard`) en `user.useConfigOnly true`.
 
 ## Screenshots en GIFs automatiseren

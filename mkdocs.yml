@@ -1,42 +1,39 @@
 site_name: dev-dots handboek
-site_description: Handleiding voor de dev-dots devcontainer — tools, sneltoetsen en AI-workflows
 site_url: https://cedanl.github.io/dev-dots/
+site_description: Handleiding voor de dev-dots devcontainer — tools, sneltoetsen en AI-workflows
 repo_url: https://github.com/cedanl/dev-dots
 repo_name: cedanl/dev-dots
 edit_uri: edit/main/docs/
 
+docs_dir: docs
+
 theme:
   name: material
+  # Zensical: classic bewaart het Material-uiterlijk waar extra.css op is gebouwd
+  variant: classic
   language: nl
-  palette:
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: deep purple
-      accent: purple
-      toggle:
-        icon: material/brightness-4
-        name: Lichte modus
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: deep purple
-      accent: purple
-      toggle:
-        icon: material/brightness-7
-        name: Donkere modus
+  logo: assets/logos/npuls_logo.jpg
+  favicon: assets/logos/beeldmerk.svg
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
+    - navigation.path
     - navigation.top
-    - navigation.instant
     - search.highlight
     - search.suggest
     - content.code.copy
     - content.code.annotate
-  icon:
-    repo: fontawesome/brands/github
-  font:
-    text: Inter
-    code: JetBrains Mono
+    - content.tabs.link
+    - toc.follow
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Welkom: index.md
@@ -49,19 +46,52 @@ nav:
   - Automatisering: automatisering.md
   - Beveiliging: beveiliging.md
 
+extra:
+  generator: false
+
+copyright: >-
+  Centrum Educatieve Data Analyse (CEDA) · Onderdeel van <a href="https://npuls.nl/" target="_blank" rel="noopener">Npuls</a> · <a href="https://edu.nl/twt84" target="_blank" rel="noopener">CEDA-community</a> · <a href="mailto:ceda@surf.nl">ceda@surf.nl</a>
+
+plugins:
+  - search:
+      lang: nl
+  # Alleen toevoegen als docs/ een bestand uit de hoofdmap insluit (bijv. README.md):
+  # - include-markdown
+  # Voeg toe bij Python src/<package>/ API-documentatie:
+  # - mkdocstrings:
+  #     handlers:
+  #       python:
+  #         paths: [src]
+  #         options:
+  #           docstring_style: google
+  #           show_source: false
+  #           show_root_heading: true
+  #           show_symbol_type_heading: true
+  #           members_order: source
+
 markdown_extensions:
+  - attr_list
+  - md_in_html
   - tables
   - admonition
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
   - pymdownx.keys
+  - pymdownx.superfences
+  # Vervang pymdownx.superfences hierboven door onderstaand blok als Mermaid gewenst is:
+  # - pymdownx.superfences:
+  #     custom_fences:
+  #       - name: mermaid
+  #         class: mermaid
+  #         format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
-  - attr_list
-  - md_in_html
-
-plugins:
-  - search:
-      lang: nl
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  # Voeg toe als MathJax gewenst is (samen met extra_javascript):
+  # - pymdownx.arithmatex:
+  #     generic: true

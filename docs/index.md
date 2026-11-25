@@ -49,7 +49,7 @@ nvim .
 claude
 ```
 
-> Claude Code en OpenCode starten met `--dangerously-skip-permissions` (ingebakken als shell-alias) — binnen de devcontainer de bedoelde workflow.
+> Claude Code en OpenCode starten met `--dangerously-skip-permissions` (ingebakken: `claude` is een shell-functie, `opencode` een alias) — binnen de devcontainer de bedoelde workflow.
 
 ---
 
@@ -61,7 +61,7 @@ Zo ziet een complete AI-codesessie eruit van begin tot eind:
 # 1. Ga naar je project
 cd mijn-project
 
-# 2. Start Claude Code (skip-permissions alias)
+# 2. Start Claude Code (met --dangerously-skip-permissions)
 claude
 
 # 3. Geef Claude een taak

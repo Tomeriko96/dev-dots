@@ -105,11 +105,11 @@ Zo ziet een complete AI-codesessie eruit:
 
 ```bash
 cd mijn-project
-claude           # Claude Code (skip-permissions alias)
+claude           # Claude Code (met --dangerously-skip-permissions)
 # Neovim erbij:
 nvim .
 # of start OpenCode:
-opencode          # skip-permissions alias
+opencode          # alias met --dangerously-skip-permissions
 ```
 
 Wil je meerdere terminals naast elkaar, gebruik dan handmatig tmux-panelen (`Ctrl+b %` / `Ctrl+b "`) of splits in VS Code's terminal.

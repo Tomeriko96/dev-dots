@@ -50,7 +50,7 @@ lta              # boomstructuur inclusief verborgen
 ### Bestanden bekijken
 
 ```bash
-bat bestand.py   # syntaxgemarkeerde bestandsweergave met regelnummers
+bat bestand.py   # (alias voor batcat) syntaxgemarkeerde bestandsweergave met regelnummers
 ```
 
 ---
@@ -85,34 +85,28 @@ decompress bestand.tar.gz
 
 ---
 
-## Pakketten
-
-Zoek en installeer apt-pakketten via een fuzzy picker:
-
-```bash
-apt-fzf              # bladeren en installeren — geïnstalleerde pakketten staan gemarkeerd met *
-apt-fzf-purge        # bladeren en verwijderen
-```
-
----
-
 ## Prompt — starship
 
 De prompt toont de huidige map, git-branch en status compact op één regel:
 
 ```
-~/workspace/project main ↑1 ✎ ➜
+~/workspace/project main * + >
 ```
 
 | Symbool | Betekenis |
 |---|---|
-| `↑n` | n commits vóór op remote (nog niet gepusht) |
-| `↓n` | n commits achter op remote |
-| `⇅` | Gedivergeerd van remote |
-| `✎` | Gewijzigde bestanden |
-| `◌` | Untracked bestanden |
-| `⦿` | Gestagede wijzigingen |
-| `✖` | Verwijderde bestanden |
-| `✓` | Alles up-to-date |
-| `➜` | Laatste commando geslaagd |
-| `✘` | Laatste commando mislukt (rood) |
+| `+n` | n commits vóór op remote (nog niet gepusht) |
+| `-n` | n commits achter op remote |
+| `+n/-m` | Gedivergeerd van remote |
+| `*` | Gewijzigde bestanden |
+| `?` | Untracked bestanden |
+| `+` | Gestagede wijzigingen |
+| `-` | Verwijderde bestanden |
+| `~` | Hernoemde bestanden |
+| `!` | Merge-conflict |
+| `$` | Stash aanwezig |
+| `=` | Alles up-to-date |
+| `>` | Laatste commando geslaagd (groen) |
+| `x` | Laatste commando mislukt (rood) |
+
+De instellingen staan in `starship/.config/starship.toml`.

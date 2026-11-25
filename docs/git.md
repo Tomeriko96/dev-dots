@@ -110,4 +110,4 @@ gclone              # toon al je repos in een fuzzy-picker
 gclone organisatie  # toon repos van een org of andere gebruiker
 ```
 
-Na het klonen springt `gclone` automatisch de nieuwe map in en toont `onefetch` een repo-overzicht.
+Na het klonen springt `gclone` automatisch de nieuwe map in.
