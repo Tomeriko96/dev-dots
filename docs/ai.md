@@ -23,21 +23,21 @@ Dit authenticeert in drie stappen:
 ## Claude Code
 
 ```bash
-claude           # start Claude Code in de huidige map (skip-permissions alias)
+claude           # start Claude Code in de huidige map (met --dangerously-skip-permissions)
 ```
 
 Claude Code werkt als een autonome agent die bestanden leest, aanpast en commando's uitvoert. Geef een taak in gewone taal.
 
 Authenticatie verloopt via subscription: `claude auth login` (browser / device-code flow).
 
-> De shell-alias zet `claude` om in `claude --dangerously-skip-permissions`. Een subcommando zoals `auth login` gaat dan óók door die alias: in zeldzame gevallen kan een leading flag een subcommando overschaduwen. Gebruik `command claude auth login` om de alias expliciet te omzeilen als het login-scherm niet opent.
+> De shell-functie `claude` (`bash/.config/bash/functions`) zet Entire aan en start `command claude --dangerously-skip-permissions`. Een subcommando zoals `auth login` gaat dan óók met die vlag: in zeldzame gevallen kan een leading flag een subcommando overschaduwen. Gebruik `command claude auth login` om de functie te omzeilen als het login-scherm niet opent.
 
 ---
 
 ## OpenCode
 
 ```bash
-opencode         # start OpenCode in de huidige map (skip-permissions alias)
+opencode         # start OpenCode in de huidige map (alias met --dangerously-skip-permissions)
 ```
 
 OpenCode werkt op dezelfde manier maar is compatible met verschillende providers. Authenticeer via:
@@ -46,7 +46,7 @@ OpenCode werkt op dezelfde manier maar is compatible met verschillende providers
 opencode auth login
 ```
 
-De globale config staat in `~/.config/opencode/opencode.json` met `permission: "allow"` — naast de skip-permissions alias.
+De globale config staat in `~/.config/opencode/opencode.json` met `permission: "allow"` — naast de skip-permissions-alias.
 
 ---
 

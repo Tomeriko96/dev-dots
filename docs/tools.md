@@ -43,15 +43,15 @@ npm run dev
 
 ## fd — snelle bestandszoeker
 
-`fd` is een gebruiksvriendelijk alternatief voor `find`.
+`fd` is een gebruiksvriendelijk alternatief voor `find`. Op Debian heet het commando `fdfind`.
 
 ```bash
-fd patroon               # zoek bestanden op naam
-fd -e py                 # zoek op extensie
-fd -t d                  # zoek alleen mappen
+fdfind patroon           # zoek bestanden op naam
+fdfind -e py             # zoek op extensie
+fdfind -t d              # zoek alleen mappen
 ```
 
-`fzf` gebruikt `fd` intern voor snelle bestandssuggesties.
+`fzf` gebruikt `fdfind` intern voor snelle bestandssuggesties.
 
 ---
 
