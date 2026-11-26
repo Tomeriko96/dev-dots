@@ -1,5 +1,5 @@
 # Zensical heeft geen `gh-deploy`: publiceren gaat via GitHub Pages met bron "GitHub Actions"
-# (Settings > Pages > Source). Kies in de stap "Build docs (strict)" Variant A of B.
+# (Settings > Pages > Source).
 name: Deploy handboek naar GitHub Pages
 
 on:
@@ -29,9 +29,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
 
       - name: Build docs (strict)
-        # Variant A (repo met pyproject.toml en een `docs`-groep met zensical; verwijder dan ZENSICAL_VERSION):
-        #   run: uv run --group docs zensical build --strict --clean
-        # Variant B (losse docs-repo zonder pyproject.toml, zoals cedanl/.github):
+        # Deze repo heeft geen pyproject.toml: Zensical komt via `uv run --with`.
         run: uv run --with "zensical==${ZENSICAL_VERSION}" zensical build --strict --clean
 
       - uses: actions/configure-pages@v6

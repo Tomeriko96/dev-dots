@@ -23,13 +23,17 @@ Dit is geen grab-bag van willekeurige tools. Het is één consistent systeem, on
 | Moderne `ls` | eza |
 | Bestandsviewer | bat |
 | Zoeken in code | ripgrep (`rg`) |
+| Bestanden zoeken | fd (commando `fdfind`) |
+| JSON verwerken | jq |
+| Systeemmonitor | htop |
 | Slimme `cd` | zoxide |
 | Prompt | starship |
 | CSV-viewer | csvlens |
 | AI (Anthropic) | Claude Code |
 | AI (OpenAI-compatible) | OpenCode |
 | AI-sessies | entire |
-| Python packages | uv |
+| Python packages | uv, micromamba |
+| JavaScript | Node.js (LTS) met npm |
 | Cloud & k8s | az, azcopy, azd, aws, kubectl, helm, flux, sops |
 | Schermopname & GIF | ffmpeg |
 | Headless browser | Playwright (Chromium) |

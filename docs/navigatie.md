@@ -2,7 +2,7 @@
 icon: lucide/terminal
 ---
 
-# Terminal & tmux
+# Terminal, tmux & navigatie
 
 tmux is de spil van elke werksessie. Het is een persistent proces: ook als je het VS Code-venster sluit of de verbinding wegvalt, blijft je tmux-sessie actief op de achtergrond. Je koppelt gewoon opnieuw aan en je bent precies waar je was.
 

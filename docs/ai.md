@@ -86,6 +86,12 @@ entire dispatch                    # markdown samenvatting van recent AI-werk
 
 ---
 
+## Gedeelde basisinstructies (`global_claude.md`)
+
+De repo bevat `global_claude.md`, een gedeelde baseline voor alle CEDA-ontwikkelaars. Die komt in `~/.claude/ceda-baseline.md` en wordt geïmporteerd vanuit je eigen `~/.claude/CLAUDE.md`. Voor OpenCode staat de baseline als beheerd blok in `~/.config/opencode/AGENTS.md`. Je eigen tekst in die bestanden blijft staan.
+
+---
+
 ## Git-identiteit per user
 
 `onboard` leidt na `gh auth login` je git-identiteit af (`user.name` / `user.email`) en zet `user.useConfigOnly true`. Commits zonder ingestelde identiteit falen met een duidelijke fout — zo wordt misattributie tussen collega's voorkomen.
