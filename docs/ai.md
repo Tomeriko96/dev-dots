@@ -1,3 +1,7 @@
+---
+icon: lucide/sparkles
+---
+
 # AI-workflows
 
 dev-dots is gebouwd rond AI-ondersteund ontwikkelen. Twee CLI-assistenten staan klaar: **Claude Code** (Anthropic) en **OpenCode** (OpenAI-compatible). Beide starten met `--dangerously-skip-permissions` — binnen de devcontainer de bedoelde workflow. Claude Code is daarnaast uitgebreid met automatische Entire-integratie voor sessie-opslag.

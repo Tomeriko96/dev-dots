@@ -1,3 +1,7 @@
+---
+icon: lucide/bot
+---
+
 # Automatisering
 
 dev-dots bevat `ffmpeg` en de systeembibliotheken voor **Playwright headless Chromium**, zodat je zonder displayserver screenshots, GIFs en video's kunt genereren — handig voor rapporten, demo's of geautomatiseerde visuele tests.

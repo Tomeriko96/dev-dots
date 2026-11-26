@@ -1,3 +1,7 @@
+---
+icon: lucide/git-branch
+---
+
 # Git
 
 dev-dots heeft drie git-tools die samenwerken: **lazygit** voor het dagelijkse werk, **gh** voor GitHub, en **delta** voor mooie diffs.

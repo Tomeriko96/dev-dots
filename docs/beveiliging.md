@@ -1,3 +1,7 @@
+---
+icon: lucide/shield-check
+---
+
 # Beveiliging
 
 Agents draaien hier met `--dangerously-skip-permissions`. Dat is de bedoelde workflow, maar het betekent dat een prompt injection (of een kwaadaardige dependency) alles kan doen wat jouw gebruiker in de container kan, inclusief je tokens versturen naar een willekeurige host. Deze pagina beschrijft de maatregelen en hun grenzen.

@@ -1,3 +1,7 @@
+---
+icon: lucide/square-terminal
+---
+
 # Shell
 
 De shell is Bash met een laag productiviteitstools. Alles is geladen via `~/.bashrc` en de bestanden in `~/.config/bash/`.

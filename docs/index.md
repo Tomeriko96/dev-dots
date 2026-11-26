@@ -1,3 +1,7 @@
+---
+icon: lucide/house
+---
+
 # Welkom bij dev-dots
 
 **dev-dots** is een eigenzinnige devcontainer voor ontwikkelaars. Alles wat je dagelijks nodig hebt — van een krachtige editor tot AI-assistenten — is voorgeladen en meteen bruikbaar. Open je project, typ één commando, en je werkt.

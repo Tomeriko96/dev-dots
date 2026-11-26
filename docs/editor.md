@@ -1,3 +1,7 @@
+---
+icon: lucide/square-pen
+---
+
 # Editor — Neovim
 
 De editor is Neovim met [LazyVim](https://www.lazyvim.org/) als startconfiguratie. LazyVim laadt plugins slim en geeft je meteen een volwaardige IDE-ervaring.
